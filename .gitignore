@@ -30,3 +30,17 @@
 *.exe
 *.out
 *.app
+
+# Keil Studio
+.build
+.mbed
+projectfiles
+*.py*
+BUILD
+compile_commands.json
+.clangd
+.cache
+mbed-os
+
+# Credentials
+credentials.h
