@@ -4,6 +4,6 @@
 #include <string>
 
 std::string floatToString(float, uint8_t);
-uint8_t floatIntegersCount(float number);
+uint8_t floatIntegersCount(float);
 
 #endif

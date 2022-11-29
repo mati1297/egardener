@@ -12,6 +12,7 @@
 #include "trh_sensor.h"
 #include <string>
 #include <vector>
+#include "aux_functions.h"
 
 // pasarlo para que sea la de 7 bits y modificarlo adentro de la clase
 #define ADDRESS_RTC 0x68
@@ -125,13 +126,9 @@ int main() {
             }
             // hacerlo bien con pasarlo a string
             else if (message.text == "/temperature") {
-                char buffer[6];
-                //snprintf(buffer, 5, "%.2f", sensor.senseTemperature());
-                bot.sendMessage(message.from_id, to_string(sensor.senseTemperature()));
+                bot.sendMessage(message.from_id, floatToString(sensor.senseTemperature(), 2));
             }
             else if (message.text == "/humidity") {
-                //char buffer[6];
-                //snprintf(buffer, 5, "%.2f", sensor.senseTemperature());
                 bot.sendMessage(message.from_id, std::string("aca va la humedad"));
             }
         }
