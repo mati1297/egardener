@@ -40,7 +40,9 @@ std::string WiFi::readToString() {
 std::string WiFi::connect(const std::string& ssid, const std::string& pwd) {
     this->ssid = ssid;
     this->pwd = pwd;
-    std::string str = "c" + ssid + "," + pwd + "\n";
+
+    std::string str = "c" + this->ssid + "," + this->pwd + "\n";
+
     serial.write(str.c_str(), str.length());
 
     std::string response = readToString();
@@ -58,13 +60,12 @@ std::string WiFi::disconnect() {
     return response;
 }
 
-uint8_t WiFi::getStatus() {
+WiFiStatus WiFi::getStatus() {
     std::string str = "w\n";
     serial.write(str.c_str(), str.length());
 
     std::string response = readToString();
-
-    return stoul(response);
+    return (WiFiStatus)stoul(response);
 }
 
 std::string WiFi::post(const std::string& url) {
