@@ -18,6 +18,7 @@ float TRHSensor::senseTemperature() {
         sensor.start();
         ready = sensor.write(address | 1);
         if (timeout_counter > 10) {
+            // TODO: devolver valor invalido y manejarlo en telegram.
             printf("Sali por timeout\n");
             break;
         }
@@ -34,6 +35,37 @@ float TRHSensor::senseTemperature() {
     float temp_total = -46.85 + 175.72 * temp / (1 << 16);
 
     return temp_total;
+}
+
+float TRHSensor::senseHumidity() {
+    sensor.start();
+    sensor.write(address);
+    sensor.write(MEAS_RH_NHM_CMD);
+
+    uint8_t ready = 0, timeout_counter = 0;
+
+    do {
+        ThisThread::sleep_for(MEASURE_TIME);
+        sensor.start();
+        ready = sensor.write(address | 1);
+        if (timeout_counter > 10) {
+            // TODO: devolver valor invalido y manejarlo en telegram.
+            printf("Sali por timeout\n");
+            break;
+        }
+        timeout_counter++;
+    } while (ready != 1);
+
+    uint8_t bytemsb = sensor.read(1);
+    uint8_t bytelsb = sensor.read(1);
+    uint8_t checksum = sensor.read(0);
+    sensor.stop();
+
+    int rh = (bytemsb << 8 | bytelsb) & RH_MASK;
+
+    float rh_total = -6.0 + 125.0 * rh / (1 << 16);
+
+    return rh_total;
 }
 
 
