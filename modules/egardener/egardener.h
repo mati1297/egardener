@@ -36,8 +36,8 @@
 #define WIFI_CONNECT_TRIES 3
 #define TIMEZONE "America/Argentina/Buenos-Aires"
 #define MAX_AMOUNT_TELEGRAM_MESSAGES 5
-#define TELEGRAM_POLL_TIME 1s
-#define TELEGRAM_POLL_TIME_WAITING 500ms
+#define TELEGRAM_POLL_TIME 1000ms
+#define TELEGRAM_POLL_TIME_WAITING 250ms
 
 class eGardener {
 private:
@@ -48,10 +48,13 @@ private:
     Memory eeprom;
     TRHSensor trhSensor;
     LightSensor lightSensor;
+    Ticker ticker;
+    bool checkMessages;
 
     void setupMemoryDist();
     void setup();
     std::string getTelegramResponseForInteraction(TelegramBot &);
+    void activateCheckMessages();
 
 public:
     eGardener();

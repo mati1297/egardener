@@ -21,7 +21,8 @@ eGardener::eGardener(): memoryDist(),
                         rtc(I2C_PORT2_SDA_PIN, I2C_PORT2_SCL_PIN, ADDRESS_RTC), 
                         eeprom(I2C_PORT2_SDA_PIN, I2C_PORT2_SCL_PIN, ADDRESS_EEPROM), 
                         trhSensor(I2C_PORT2_SDA_PIN, I2C_PORT2_SCL_PIN, ADDRESS_SENSOR_RH_TEMP), 
-                        lightSensor(LIGHT_SENSOR_PIN) {                      
+                        lightSensor(LIGHT_SENSOR_PIN), ticker(),
+                        checkMessages(false) {                      
     setup();
 }
 
@@ -44,56 +45,64 @@ void eGardener::execute() {
 
     TelegramBot bot(wifi, TELEGRAM_BOT_TOKEN);
 
+    // setea tickers
+    ticker.attach(callback(this, &eGardener::activateCheckMessages), TELEGRAM_POLL_TIME);
+
     // validar de quien viene y guardar en memoria.
     while (true) {
-        std::vector<TelegramMessage> messages = bot.getMessages(MAX_AMOUNT_TELEGRAM_MESSAGES);
-
-        for (auto message: messages) {
-            //format output
-            if (message.text == "/temperature") {
-                bot.sendMessage(message.from_id, floatToString(trhSensor.senseTemperature(), 2));
-            }
-            else if (message.text == "/humidity") {
-                bot.sendMessage(message.from_id, floatToString(trhSensor.senseHumidity(), 2));
-            }
-            else if (message.text == "/light") {
-                float value = lightSensor.sense();
-                if (value < 0)
-                    bot.sendMessage(message.from_id, "You need to calibrate light sensor with /calibrateLightSensor");
-                else
-                    bot.sendMessage(message.from_id, floatToString(value * 100, 2) + "%");
-            }
-            else if (message.text == "/calibrateLightSensor") {
-                float min, max;
-
-                bot.sendMessage(message.from_id, "Put direct light on the sensor with your phone flash and type ok (any other text to cancel).");
-                if (getTelegramResponseForInteraction(bot) != "ok") {
-                    printf("Operation cancelled");
-                    break;
+        if (checkMessages) {
+            std::vector<TelegramMessage> messages = bot.getMessages(MAX_AMOUNT_TELEGRAM_MESSAGES);
+            for (auto message: messages) {
+                //format output
+                if (message.text == "/temperature") {
+                    bot.sendMessage(message.from_id, floatToString(trhSensor.senseTemperature(), 2));
                 }
-                max = lightSensor.sense(true);
-
-                bot.sendMessage(message.from_id, "Now put your finger on the sensor type ok (any other text to cancel).");
-                if (getTelegramResponseForInteraction(bot) != "ok") {
-                                        bot.sendMessage(message.from_id, "Operation cancelled");
-                    break;
+                else if (message.text == "/humidity") {
+                    bot.sendMessage(message.from_id, floatToString(trhSensor.senseHumidity(), 2));
                 }
-                min = lightSensor.sense(true);
-
-                if (lightSensor.setMaxAndMin(max, min)) {
-                    bot.sendMessage(message.from_id, "Light sensor calibrated succesfully");
-                    auto address = memoryDist.find("ls")->second;
-                    eeprom.write(address.first, true);
-                    eeprom.write(address.first + sizeof(bool), max);
-                    eeprom.write(address.first + sizeof(bool) + sizeof(float), min);
+                else if (message.text == "/light") {
+                    float value = lightSensor.sense();
+                    if (value < 0)
+                        bot.sendMessage(message.from_id, "You need to calibrate light sensor with /calibrateLightSensor");
+                    else
+                        bot.sendMessage(message.from_id, floatToString(value * 100, 2) + "%");
                 }
-                else
-                    bot.sendMessage(message.from_id, "An error ocurred, try again"); 
+                else if (message.text == "/calibrateLightSensor") {
+                    float min, max;
+
+                    bot.sendMessage(message.from_id, "Put direct light on the sensor with your phone flash and type ok (any other text to cancel).");
+                    if (getTelegramResponseForInteraction(bot) != "ok") {
+                        printf("Operation cancelled");
+                        break;
+                    }
+                    max = lightSensor.sense(true);
+
+                    bot.sendMessage(message.from_id, "Now put your finger on the sensor type ok (any other text to cancel).");
+                    if (getTelegramResponseForInteraction(bot) != "ok") {
+                                            bot.sendMessage(message.from_id, "Operation cancelled");
+                        break;
+                    }
+                    min = lightSensor.sense(true);
+
+                    if (lightSensor.setMaxAndMin(max, min)) {
+                        bot.sendMessage(message.from_id, "Light sensor calibrated succesfully");
+                        auto address = memoryDist.find("ls")->second;
+                        eeprom.write(address.first, true);
+                        eeprom.write(address.first + sizeof(bool), max);
+                        eeprom.write(address.first + sizeof(bool) + sizeof(float), min);
+                    }
+                    else
+                        bot.sendMessage(message.from_id, "An error ocurred, try again"); 
+                }
             }
+            checkMessages = false;
         }
         // Por ahora, despues con timers y booleans.
-        ThisThread::sleep_for(1s);
     }
+}
+
+void eGardener::activateCheckMessages() {
+    checkMessages = true;
 }
 
 void eGardener::setup() {
