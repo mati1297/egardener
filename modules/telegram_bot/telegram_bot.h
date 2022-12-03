@@ -20,7 +20,7 @@ struct TelegramMessage {
                     from_name(from_name), text(text) {
     // TODO validar que este bien cargado todo y arreglar forzosamente.
     // ver como eliminar constructor de struct por {}
-                    }
+    }
 };
 
 class TelegramBot {
