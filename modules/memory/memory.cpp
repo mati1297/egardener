@@ -11,6 +11,8 @@ uint16_t Memory::write(uint16_t address, const std::vector<uint8_t>& vector) {
         return 0;
     if (write_length > (MAX_ADDRESS - address + 1))
         write_length = MAX_ADDRESS - address + 1;
+    if (write_length > MAX_PAGE_SIZE)
+        return 0;
 
     uint16_t count = 0;
 
@@ -27,6 +29,8 @@ uint16_t Memory::write(uint16_t address, const std::vector<uint8_t>& vector) {
     if (count != write_length + 3)
         return 0;
 
+    ThisThread::sleep_for(WRITE_TIME);
+
     return write_length;
 }
 
@@ -37,6 +41,8 @@ uint16_t Memory::read(uint16_t address, std::vector<uint8_t>& vector) {
         return 0;
     if (read_length > (MAX_ADDRESS - address + 1))
         read_length = MAX_ADDRESS - address + 1;
+    if (read_length > MAX_PAGE_SIZE)
+        return 0;
 
     uint16_t count = 0;
 
@@ -57,42 +63,118 @@ uint16_t Memory::read(uint16_t address, std::vector<uint8_t>& vector) {
     return read_length;
 }
 
-std::vector<uint8_t> Memory::floatToBytes(float number){
+// address_to no se lee.
+std::vector<uint8_t> Memory::read(uint16_t address_from, uint16_t address_to) {
+    size_t read_length = address_to - address_from;
+
+    std::vector<uint8_t> vector(read_length);
+
+    if (address_from > MAX_ADDRESS)
+        return std::vector<uint8_t>();
+    if (address_to > address_from)
+        return std::vector<uint8_t>();
+    if (read_length > (MAX_ADDRESS - address_from + 1))
+        read_length = MAX_ADDRESS - address_from + 1;
+    if (read_length > MAX_PAGE_SIZE)
+        return std::vector<uint8_t>();
+
+    uint16_t count = 0;
+
+    eeprom.start();
+    count += eeprom.write(i2cAddress | 0);
+    count += eeprom.write(address_from >> 8 & 0x0F);
+    count += eeprom.write(address_from & 0xFF);
+    eeprom.start();
+    count += eeprom.write(i2cAddress | 1);
+    for (uint16_t i = 0; i < read_length - 1; i++)
+        vector[i] = eeprom.read(1);
+    vector[read_length - 1] = eeprom.read(0);
+    eeprom.stop();
+
+    if (count != 4)
+        return std::vector<uint8_t>();
+
+    return vector;
+}
+
+bool Memory::write(uint16_t address, float number) {
     std::vector<uint8_t> vector(sizeof(float));
 
     memcpy(&vector[0], &number, sizeof(float));
 
-    return vector;
+    return write(address, vector) == sizeof(float);
 }
 
-// toma solo los primeros 4 si es mas grande
-float Memory::bytesToFloat(const std::vector<uint8_t>& vector) {
-    if (vector.size() < sizeof(float))
-        return 0; //validar de otra manera.
+bool Memory::read(uint16_t address, float& number) {
+    std::vector<uint8_t> vector(sizeof(float));
 
-    float out = 0;
+    if (read(address, vector) != sizeof(float))
+        return false;
 
-    memcpy(&out, &vector[0], sizeof(float));
+    memcpy(&number, &vector[0], sizeof(float));
 
-    return out;
+    return true;
 }
 
-std::vector<uint8_t> Memory::intToBytes(int number){
+bool Memory::write(uint16_t address, bool boolean) {
+    std::vector<uint8_t> vector(sizeof(bool));
+
+    memcpy(&vector[0], &boolean, sizeof(bool));
+
+    return write(address, vector) == sizeof(bool);
+}
+
+bool Memory::read(uint16_t address, bool& boolean) {
+    std::vector<uint8_t> vector(sizeof(bool));
+
+    if (read(address, vector) != sizeof(bool))
+        return false;
+
+    memcpy(&boolean, &vector[0], sizeof(bool));
+
+    return true;
+}
+
+bool Memory::write(uint16_t address, int number) {
     std::vector<uint8_t> vector(sizeof(int));
 
     memcpy(&vector[0], (uint8_t*)&number, sizeof(int));
 
-    return vector;
+    return write(address, vector) == sizeof(int);
 }
 
-// toma solo los primeros 4 si es mas grande
-int Memory::bytesToInt(const std::vector<uint8_t>& vector) {
-    if (vector.size() < sizeof(int))
-        return 0; //validar de otra manera.
+bool Memory::read(uint16_t address, int& number) {
+    std::vector<uint8_t> vector(sizeof(int));
 
-    int out = 0;
+    if (read(address, vector) != sizeof(int))
+        return false;
 
-    memcpy(&out, &vector[0], sizeof(int));
+    memcpy(&number, &vector[0], sizeof(int));
 
-    return out;
+    return true;
+}
+
+bool Memory::write(uint16_t address, const std::string& string) {
+    size_t length = string.length();
+    std::vector<uint8_t> vector(length + 1);
+    vector[length] = 0;
+
+    memcpy(&vector[0], (uint8_t*)string.c_str(), length + 1);
+
+    return write(address, vector) == length + 1;
+}
+
+bool Memory::read(uint16_t address, std::string& string) {
+    std::vector<uint8_t> vector(MAX_PAGE_SIZE);
+
+    if (read(address, vector) != MAX_PAGE_SIZE)
+        return false;
+
+    for (auto c: vector){
+        if (!c)
+            break;
+        string += c;
+    }
+
+    return true;
 }

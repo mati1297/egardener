@@ -5,7 +5,11 @@
 #include <string>
 #include <vector>
 
+
+// Entiendo que esto es para las high-endurance
 #define MAX_ADDRESS 0x0FFF
+#define MAX_PAGE_SIZE 32
+#define WRITE_TIME 20ms
 
 // 32kb
 class Memory {
@@ -21,11 +25,17 @@ public:
 
     //solo importan los 12lsb. Se lee lo que entre en el vector. se devuelve la cantidad de bytes leidos.
     uint16_t read(uint16_t, std::vector<uint8_t>&);
+    std::vector<uint8_t> read(uint16_t address_from, uint16_t address_to);
 
-    static std::vector<uint8_t> floatToBytes(float number);
-    static float bytesToFloat(const std::vector<uint8_t>& vector);
-    static std::vector<uint8_t> intToBytes(int number);
-    static int bytesToInt(const std::vector<uint8_t>& vector);
+    bool write(uint16_t, float);
+    bool read(uint16_t, float&);
+    bool write(uint16_t, bool);
+    bool read(uint16_t, bool&);
+    bool write(uint16_t, int);
+    bool read(uint16_t, int&);
+    bool write(uint16_t, const std::string&);
+    bool read(uint16_t, std::string&);
+    
 };
 
 #endif
