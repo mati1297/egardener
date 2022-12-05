@@ -13,7 +13,7 @@
 #define BUFFER_SIZE_TIME_12 11
 #define BUFFER_SIZE_DATE 10
 
-#define DAYS_OF_WEEK {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday",
+#define DAYS_OF_WEEK {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", \
                       "Friday", "Saturday"}
 
 // ver despues como hacer con los dias de la semana. Los guardo con texto,
@@ -57,7 +57,7 @@ class Clock {
  public:
     Clock(PinName, PinName, uint8_t);
     bool set(const Time&);
-    Time get() const;
+    Time get();
     bool sync(WiFi&, const std::string&);
 };
 

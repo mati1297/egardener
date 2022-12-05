@@ -17,11 +17,11 @@ Clock::Clock(PinName SDA, PinName SCL, uint8_t address): rtc(SDA, SCL),
   rtc.stop();
 }
 
-static uint8_t Clock::bcd2dec(uint8_t bcd) {
+uint8_t Clock::bcd2dec(uint8_t bcd) {
   return (bcd & 0x0F) + (((bcd & 0xF0) >> 4) * 10);
 }
 
-static uint8_t Clock::dec2bcd(uint8_t dec) {
+uint8_t Clock::dec2bcd(uint8_t dec) {
   return ((dec % 10) & 0x0F) | ((dec / 10) << 4 & 0xF0);
 }
 
@@ -44,7 +44,7 @@ bool Clock::set(const Time& time) {
   return true;
 }
 
-Time Clock::get() const {
+Time Clock::get() {
   uint8_t seconds, minutes, hours, day, date, month, year;
   bool pm, mode_twelve;
   uint8_t hours_read;
