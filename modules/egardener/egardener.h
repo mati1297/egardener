@@ -1,9 +1,11 @@
 #ifndef EGARDENER__H
 #define EGARDENER__H
 
-#include "mbed.h"
 #include <map>
 #include <tuple>
+#include <string>
+#include <vector>
+#include "mbed.h"
 #include "wifi.h"
 #include "clock.h"
 #include "memory.h"
@@ -11,8 +13,7 @@
 #include "credentials.h"
 #include "trh_sensor.h"
 #include "light_sensor.h"
-#include <string>
-#include <vector>
+
 #include "aux_functions.h"
 
 #define I2C_PORT2_SDA_PIN PB_9
