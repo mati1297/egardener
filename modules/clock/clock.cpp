@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 #include "mbed.h"
-#include "modules/clock/clock.h"
+#include "clock.h"
 #include "modules/wifi/wifi.h"
 #include "modules/Json/Json.h"
 
