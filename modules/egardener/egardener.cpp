@@ -9,14 +9,14 @@
 #include <utility>
 #include "mbed.h"
 #include "egardener.h"
-#include "modules/wifi/wifi.h"
-#include "modules/clock/clock.h"
-#include "modules/memory/memory.h"
-#include "modules/telegram_bot/telegram_bot.h"
-#include "modules/credentials/credentials.h"
-#include "modules/trh_sensor/trh_sensor.h"
-#include "modules/light_sensor/light_sensor.h"
-#include "modules/aux_functions/aux_functions.h"
+#include "wifi.h"
+#include "clock.h"
+#include "memory.h"
+#include "telegram_bot.h"
+#include "credentials.h"
+#include "trh_sensor.h"
+#include "light_sensor.h"
+#include "aux_functions.h"
 
 // hacer que guarde un user y listo.
 eGardener::eGardener(): memoryDist(),
