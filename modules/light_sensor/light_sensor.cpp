@@ -3,7 +3,7 @@
 
 #include <algorithm>
 #include "mbed.h"
-#include "modules/light_sensor/light_sensor.h"
+#include "light_sensor.h"
 
 LightSensor::LightSensor(PinName analog, float vref, uint8_t averagePoints):
                          analog(analog, vref), max(-1), min(-1),

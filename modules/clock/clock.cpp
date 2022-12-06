@@ -6,7 +6,7 @@
 #include "mbed.h"
 #include "clock.h"
 #include "wifi.h"
-#include "Json/Json.h"
+#include "Json.h"
 
 Clock::Clock(PinName SDA, PinName SCL, uint8_t address): rtc(SDA, SCL),
                                                          address(address << 1) {
