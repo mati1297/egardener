@@ -57,7 +57,7 @@ class Clock {
  public:
   Clock(PinName, PinName, uint8_t);
   bool set(const Time &);
-  Time get() const;
+  Time get();
   bool sync(WiFi &, const std::string &);
 };
 
