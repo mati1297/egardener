@@ -32,7 +32,7 @@
 #define ADDRESS_EEPROM 0x50
 #define ADDRESS_SENSOR_RH_TEMP 0x40
 
-#define MAX_SSID_LENGTH 31 // para que entre en una pagina de la eeprom + un /0
+#define MAX_SSID_LENGTH 31  // para que entre en una pagina de la eeprom + un /0
 #define MAX_PWD_LENGTH 31  // para que entre en una pagina de la eeprom.
 
 #define WIFI_CONNECT_TRIES 3
@@ -41,8 +41,7 @@
 #define TELEGRAM_POLL_TIME 1000ms
 #define TELEGRAM_POLL_TIME_WAITING 250ms
 
-class eGardener
-{
+class eGardener {
  private:
   std::map<std::string, std::pair<uint16_t, uint8_t>> memoryDist;
   std::string wifi_ssid, wifi_pwd;
@@ -59,9 +58,9 @@ class eGardener
   std::string getTelegramResponseForInteraction(TelegramBot &);
   void activateCheckMessages();
 
-public:
+ public:
   eGardener();
   void execute();
 };
 
-#endif // MODULES_EGARDENER_EGARDENER_H_
+#endif  // MODULES_EGARDENER_EGARDENER_H_
