@@ -1,10 +1,14 @@
-#ifndef EGARDENER__H
-#define EGARDENER__H
+// Copyright 2022 Matías Charrut
+// This code is licensed under MIT license (see LICENSE for details)
+
+#ifndef MODULES_EGARDENER_EGARDENER_H_
+#define MODULES_EGARDENER_EGARDENER_H_
 
 #include <map>
-#include <tuple>
 #include <string>
+#include <tuple>
 #include <vector>
+#include <utility>
 #include "mbed.h"
 #include "wifi.h"
 #include "clock.h"
@@ -13,11 +17,10 @@
 #include "credentials.h"
 #include "trh_sensor.h"
 #include "light_sensor.h"
-
 #include "aux_functions.h"
 
 #define I2C_PORT2_SDA_PIN PB_9
-#define I2C_PORT2_SCL_PIN PB_8 
+#define I2C_PORT2_SCL_PIN PB_8
 
 #define WIFI_SERIAL_TX_PIN PD_5
 #define WIFI_SERIAL_RX_PIN PD_6
@@ -29,10 +32,8 @@
 #define ADDRESS_EEPROM 0x50
 #define ADDRESS_SENSOR_RH_TEMP 0x40
 
-//#define MAX_SSID_LENGTH 32
-//#define MAX_PWD_LENGTH 63
 #define MAX_SSID_LENGTH 31 // para que entre en una pagina de la eeprom + un /0
-#define MAX_PWD_LENGTH 31 // para que entre en una pagina de la eeprom.
+#define MAX_PWD_LENGTH 31  // para que entre en una pagina de la eeprom.
 
 #define WIFI_CONNECT_TRIES 3
 #define TIMEZONE "America/Argentina/Buenos-Aires"
@@ -40,26 +41,27 @@
 #define TELEGRAM_POLL_TIME 1000ms
 #define TELEGRAM_POLL_TIME_WAITING 250ms
 
-class eGardener {
-private:
-    std::map<std::string, std::pair<uint16_t, uint8_t>> memoryDist;
-    std::string wifi_ssid, wifi_pwd;
-    WiFi wifi;
-    Clock rtc;
-    Memory eeprom;
-    TRHSensor trhSensor;
-    LightSensor lightSensor;
-    Ticker ticker;
-    bool checkMessages;
+class eGardener
+{
+ private:
+  std::map<std::string, std::pair<uint16_t, uint8_t>> memoryDist;
+  std::string wifi_ssid, wifi_pwd;
+  WiFi wifi;
+  Clock rtc;
+  Memory eeprom;
+  TRHSensor trhSensor;
+  LightSensor lightSensor;
+  Ticker ticker;
+  bool checkMessages;
 
-    void setupMemoryDist();
-    void setup();
-    std::string getTelegramResponseForInteraction(TelegramBot &);
-    void activateCheckMessages();
+  void setupMemoryDist();
+  void setup();
+  std::string getTelegramResponseForInteraction(TelegramBot &);
+  void activateCheckMessages();
 
 public:
-    eGardener();
-    void execute();
+  eGardener();
+  void execute();
 };
 
-#endif
+#endif // MODULES_EGARDENER_EGARDENER_H_
