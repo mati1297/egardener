@@ -1,5 +1,8 @@
-#ifndef TRH_SENSOR__H
-#define TRH_SENSOR__H
+// Copyright 2022 Matías Charrut
+// This code is licensed under MIT license (see LICENSE for details)
+
+#ifndef MODULES_TRH_SENSOR_TRH_SENSOR_H_
+#define MODULES_TRH_SENSOR_TRH_SENSOR_H_
 
 #include "mbed.h"
 
@@ -21,17 +24,17 @@
 #define RH_MASK 0xFFF0
 
 class TRHSensor {
-private:
-    I2C sensor;
-    uint8_t address;
+ private:
+  I2C sensor;
+  uint8_t address;
 
-    bool defaultConfig();
-    bool softReset();
+  bool defaultConfig();
+  bool softReset();
 
-public:
-    TRHSensor(PinName, PinName, uint8_t);
-    float senseTemperature();
-    float senseHumidity();
+ public:
+  TRHSensor(PinName, PinName, uint8_t);
+  float senseTemperature();
+  float senseHumidity();
 };
 
-#endif
+#endif  // MODULES_TRH_SENSOR_TRH_SENSOR_H_
