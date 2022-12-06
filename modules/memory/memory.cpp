@@ -142,7 +142,7 @@ bool Memory::read(uint16_t address, bool &boolean) {
 bool Memory::write(uint16_t address, int number) {
   std::vector<uint8_t> vector(sizeof(int));
 
-  memcpy(&vector[0], std::reinterpret_cast<uint8_t *>(&number), sizeof(int));
+  memcpy(&vector[0], reinterpret_cast<uint8_t *>(&number), sizeof(int));
 
   return write(address, vector) == sizeof(int);
 }
@@ -163,8 +163,7 @@ bool Memory::write(uint16_t address, const std::string &string) {
   std::vector<uint8_t> vector(length + 1);
   vector[length] = 0;
 
-  memcpy(&vector[0], std::reinterpret_cast<uint8_t *>(string.c_str()),
-         length + 1);
+  memcpy(&vector[0], string.c_str(), length + 1);
 
   return write(address, vector) == length + 1;
 }
