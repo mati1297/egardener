@@ -1,3 +1,6 @@
+// Copyright 2022 Matías Charrut
+// This code is licensed under MIT license (see LICENSE for details)
+
 #include <string>
 #include <vector>
 #include "mbed.h"
@@ -6,86 +9,84 @@
 // poner const
 
 WiFi::WiFi(PinName tx_pin, PinName rx_pin, int baud):
-            serial(tx_pin, rx_pin, baud), ssid(), pwd() {
-    // ver lo de que cuando inicio sin reiniciar el otro se rompe.
-    serial.sync();
+           serial(tx_pin, rx_pin, baud), ssid(), pwd() {
+  // ver lo de que cuando inicio sin reiniciar el otro se rompe.
+  serial.sync();
 }
 
 std::string WiFi::readNBytes(size_t size) {
-    size_t readed, total_readed = 0;
-    std::vector<char> buffer(size + 1);
+  size_t readed, total_readed = 0;
+  std::vector<char> buffer(size + 1);
 
-    while (total_readed < size) {
-        readed = serial.read(&buffer[total_readed], size - total_readed);
-        if (readed <= 0)
-            break;
-        total_readed += readed;
-    }
+  while (total_readed < size) {
+    readed = serial.read(&buffer[total_readed], size - total_readed);
+    if (readed <= 0)
+      break;
+    total_readed += readed;
+  }
 
-    return std::string(&buffer[0]);
+  return std::string(&buffer[0]);
 }
 
 std::string WiFi::readToString() {
-    std::string size_buffer = readNBytes(6);
+  std::string size_buffer = readNBytes(6);
 
-    char * endptr;
-    size_t size = strtoul(size_buffer.c_str(), &endptr, 10);
+  char *endptr;
+  size_t size = strtoul(size_buffer.c_str(), &endptr, 10);
 
-    // verificar endptr
+  // verificar endptr
 
-    std::string buffer = readNBytes(size);
-    return buffer;
+  std::string buffer = readNBytes(size);
+  return buffer;
 }
 
-std::string WiFi::connect(const std::string& ssid, const std::string& pwd) {
-    this->ssid = ssid;
-    this->pwd = pwd;
+std::string WiFi::connect(const std::string &ssid, const std::string &pwd) {
+  this->ssid = ssid;
+  this->pwd = pwd;
 
-    std::string str = "c" + this->ssid + "," + this->pwd + "\n";
+  std::string str = "c" + this->ssid + "," + this->pwd + "\n";
 
-    serial.write(str.c_str(), str.length());
+  serial.write(str.c_str(), str.length());
 
-    std::string response = readToString();
+  std::string response = readToString();
 
-    return response;
+  return response;
 }
 
 std::string WiFi::disconnect() {
-    std::string str = "d\n";
+  std::string str = "d\n";
 
-    serial.write(str.c_str(), str.length());
+  serial.write(str.c_str(), str.length());
 
-    std::string response = readToString();
+  std::string response = readToString();
 
-    return response;
+  return response;
 }
 
 WiFiStatus WiFi::getStatus() {
-    std::string str = "w\n";
-    serial.write(str.c_str(), str.length());
+  std::string str = "w\n";
+  serial.write(str.c_str(), str.length());
 
-    std::string response = readToString();
-    return (WiFiStatus)stoul(response);
+  std::string response = readToString();
+  return (WiFiStatus)stoul(response);
 }
 
-std::string WiFi::post(const std::string& url) {
-    std::string str = "p" + url + "\n";
+std::string WiFi::post(const std::string &url) {
+  std::string str = "p" + url + "\n";
 
-    serial.write(str.c_str(), str.length());
+  serial.write(str.c_str(), str.length());
 
-    std::string response = readToString();
+  std::string response = readToString();
 
-    return response;
+  return response;
 }
 
-std::string WiFi::get(const std::string& url) {
-    std::string str = "g" + url + "\n";
+std::string WiFi::get(const std::string &url) {
+  std::string str = "g" + url + "\n";
 
-    serial.write(str.c_str(), str.length());
+  serial.write(str.c_str(), str.length());
 
-    std::string response = readToString();
+  std::string response = readToString();
 
-    return response;
+  return response;
 }
-
-
