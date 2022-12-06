@@ -1,3 +1,6 @@
+// Copyright 2022 Matías Charrut
+// This code is licensed under MIT license (see LICENSE for details)
+
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -8,102 +11,126 @@
 
 // cambiar por iteradores donde pueda.
 
-TelegramBot::TelegramBot(WiFi& wifi, const std::string& token): wifi(wifi), token(token), last_update(-1) {
-    getMessages(0, 1);
+TelegramBot::TelegramBot(WiFi &wifi, const std::string &token):
+                         wifi(wifi), token(token), last_update(-1) {
+  getMessages(0, 1);
 }
 
-bool TelegramBot::sendMessage(const std::string& chat_id, const std::string& message) {
-    std::string url = "https://api.telegram.org/bot" + token + "/sendMessage?chat_id=" + chat_id + "&text=" + message;
+bool TelegramBot::sendMessage(const std::string &chat_id,
+                              const std::string &message) {
+  std::string url = "https://api.telegram.org/bot" + token +
+                    "/sendMessage?chat_id=" + chat_id + "&text=" + message;
 
-    std::string response = wifi.post(url);
+  std::string response = wifi.post(url);
 
-    Json json(response.c_str(), response.length());
+  Json json(response.c_str(), response.length());
 
-    bool result = true;
+  bool result = true;
 
-    if (!json.isValidJson())
-        return false;
+  if (!json.isValidJson())
+    return false;
 
-    if (json.tokenBooleanValue(json.findChildIndexOf(json.findKeyIndex("ok")), result) < 0) 
-        return false;
+  if (json.tokenBooleanValue(json.findChildIndexOf(json.findKeyIndex("ok")),
+                                                   result) < 0)
+    return false;
 
-    return result;
+  return result;
 }
 
 std::vector<TelegramMessage> TelegramBot::getMessages(size_t limit) {
-    return getMessages(last_update, limit);
+  return getMessages(last_update, limit);
 }
 
-std::vector<TelegramMessage> TelegramBot::getMessages(size_t offset, size_t limit) {
-    std::string url = "https://api.telegram.org/bot" + token + "/getUpdates?offset=" + std::to_string(offset) + "&limit=" + std::to_string(limit);
+std::vector<TelegramMessage> TelegramBot::getMessages(size_t offset,
+                                                      size_t limit) {
+  std::string url = "https://api.telegram.org/bot" + token +
+                    "/getUpdates?offset=" + std::to_string(offset) + "&limit="
+                    + std::to_string(limit);
 
-    std::string response = wifi.post(url);
+  std::string response = wifi.post(url);
 
-    std::vector<TelegramMessage> messages;
+  std::vector<TelegramMessage> messages;
 
-    //ver lo de probar validjson con varios maxTokens.
-    Json json(response.c_str(), response.length(), 1000);
+  // ver lo de probar validjson con varios maxTokens.
+  Json json(response.c_str(), response.length(), 1000);
 
-
-    if (!json.isValidJson())
-        return messages;
-
-    bool result = true;
-
-    if (json.tokenBooleanValue(json.findChildIndexOf(json.findKeyIndex("ok")), result) < 0)
-        return messages;
-
-    messages = parseJsonMessages(json);
-
-    if (!messages.empty())
-        last_update = stoul(messages.back().update_id) + 1; // reemplazar por getNumberToken?
-
+  if (!json.isValidJson())
     return messages;
+
+  bool result = true;
+
+  if (json.tokenBooleanValue(json.findChildIndexOf(json.findKeyIndex("ok")),
+      result) < 0)
+    return messages;
+
+  messages = parseJsonMessages(json);
+
+  if (!messages.empty())
+    last_update = stoul(messages.back().update_id) + 1;
+
+  return messages;
 }
 
+std::vector<TelegramMessage> TelegramBot::parseJsonMessages(const Json &json) {
+  std::vector<TelegramMessage> output;
 
-std::vector<TelegramMessage> TelegramBot::parseJsonMessages(const Json& json) {
-    std::vector<TelegramMessage> output;
+  int keyIndexResultArray = json.findChildIndexOf(json.findKeyIndex("result"));
+  int resultCount = json.childCount(keyIndexResultArray);
 
-    int keyIndexResultArray = json.findChildIndexOf(json.findKeyIndex("result"));
-    int resultCount = json.childCount(keyIndexResultArray);
+  int keyResultI = 0;
+  for (int i = 0; i < resultCount; i++) {
+    keyResultI = json.findChildIndexOf(keyIndexResultArray, keyResultI);
 
+    int keyUpdateId = json.findChildIndexOf(json.findKeyIndexIn("update_id",
+                                                                keyResultI));
+    std::string updateId = json.tokenString(keyUpdateId);
 
-    int keyResultI = 0;
-    for (int i = 0; i < resultCount; i++) {
-        keyResultI = json.findChildIndexOf(keyIndexResultArray, keyResultI);
+    ssize_t numberUpdateId = stoul(updateId);
+    if (numberUpdateId < last_update)
+      continue;
 
-        int keyUpdateId = json.findChildIndexOf(json.findKeyIndexIn("update_id", keyResultI));
-        std::string updateId = json.tokenString(keyUpdateId);
+    int keyMessage = json.findKeyIndexIn("message", keyResultI);
 
-        ssize_t numberUpdateId = stoul(updateId);
-        if (numberUpdateId < last_update)
-            continue;
+    int keyFrom = json.findKeyIndexIn("from",
+                                      json.findChildIndexOf(keyMessage));
 
-        int keyMessage = json.findKeyIndexIn("message", keyResultI);
+    int keyFromId = json.findChildIndexOf(json.findKeyIndexIn("id",
+                                          json.findChildIndexOf(keyFrom)));
+    std::string fromId = json.tokenString(keyFromId);
 
-        int keyFrom = json.findKeyIndexIn("from", json.findChildIndexOf(keyMessage));
+    int keyFromName = json.findChildIndexOf(json.findKeyIndexIn("first_name",
+                                            json.findChildIndexOf(keyFrom)));
+    std::string fromName = json.tokenString(keyFromName);
 
-        int keyFromId = json.findChildIndexOf(json.findKeyIndexIn("id", json.findChildIndexOf(keyFrom)));
-        std::string fromId = json.tokenString(keyFromId);
+    int keyFromUsername = json.findChildIndexOf(json.findKeyIndexIn("username",
+                                                json.findChildIndexOf(
+                                                  keyFrom)));
+    std::string fromUserName;
+    if (keyFromUsername >= 0)
+      fromUserName = json.tokenString(keyFromUsername);
+    else
+      fromUserName = fromId;
 
-        int keyFromName = json.findChildIndexOf(json.findKeyIndexIn("first_name", json.findChildIndexOf(keyFrom)));
-        std::string fromName = json.tokenString(keyFromName);
+    int keyText = json.findChildIndexOf(json.findKeyIndexIn("text",
+                                        json.findChildIndexOf(keyMessage)));
+    std::string text = json.tokenString(keyText);
 
-        int keyFromUsername = json.findChildIndexOf(json.findKeyIndexIn("username", json.findChildIndexOf(keyFrom)));
-        std::string fromUserName;
-        if (keyFromUsername >= 0)
-            fromUserName = json.tokenString(keyFromUsername);
-        else
-            fromUserName = fromId;
+    TelegramMessage newMessage = {updateId, fromId, fromUserName, fromName, \
+                                  text};
+    output.push_back(newMessage);
+  }
 
-        int keyText = json.findChildIndexOf(json.findKeyIndexIn("text", json.findChildIndexOf(keyMessage)));
-        std::string text = json.tokenString(keyText);
-
-        TelegramMessage newMessage = {updateId, fromId, fromUserName, fromName, text};
-        output.push_back(newMessage);
-    }
-
-    return output;
+  return output;
 }
 
+TelegramMessage::TelegramMessage(const std::string &update_id,
+                                 const std::string &from_id,
+                                 const std::string &from_username,
+                                 const std::string &from_name,
+                                 const std::string &text):
+                                 update_id(update_id), from_id(from_id),
+                                 from_username(from_username),
+                                 from_name(from_name), text(text) {
+    // TODO(matiascharrut) validar que este bien cargado todo y arreglar
+    // forzosamente. Ver como eliminar constructor de struct por {}
+}
