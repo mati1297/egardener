@@ -1,16 +1,19 @@
-#ifndef VECTOR__H
-#define VECTOR__H
+// Copyright 2022 Matías Charrut
+// This code is licensed under MIT license (see LICENSE for details)
+
+#ifndef ESP32_WIFI_VECTOR_H_
+#define ESP32_WIFI_VECTOR_H_
 
 #include <Arduino.h>
 
 template <class T>
 class Vector {
-private:
+ private:
   size_t size;
   T * vector;
 
-public:
-  Vector(size_t size);
+ public:
+  explicit Vector(size_t size);
   Vector(Vector&&);
   Vector(Vector&) = delete;
   ~Vector();
@@ -57,6 +60,4 @@ T& Vector<T>::operator[](size_t i) {
   return vector[i];
 }
 
-
-
-#endif
+#endif  // ESP32_WIFI_VECTOR_H_

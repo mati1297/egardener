@@ -1,3 +1,6 @@
+// Copyright 2022 Matías Charrut
+// This code is licensed under MIT license (see LICENSE for details)
+
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <AsyncTCP.h>
@@ -19,9 +22,9 @@ String ssid_connect = "";
 String pwd_connect = "";
 bool connect_to_wifi = false;
 
-IPAddress local_ip(192,168,4,1);
-IPAddress gateway(192,168,1,1);
-IPAddress subnet(255,255,255,0);
+IPAddress local_ip(192, 168, 4, 1);
+IPAddress gateway(192, 168, 1, 1);
+IPAddress subnet(255, 255, 255, 0);
 
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html><head>
@@ -66,16 +69,14 @@ void loop() {
     cmd = received.substring(0, 1)[0];
     ssize_t params_size = 0;
     Vector<String> params = parseParameters(received.substring(1));
-    
     Serial.println(received);
-    switch(cmd) {
+
+    switch (cmd) {
       case 'c':
         if (params_size > 2)
           Serial.println("Error en cantidad de parametros");
-        //connectToWiFi(params[0], params[1]);
         disconnectFromWiFi();
         sendToSerial2(connectToWiFi(params[0], params[1]));
-        //sendToSerial2(255);
         break;
       case 'w':
         if (params_size > 0)
@@ -104,15 +105,15 @@ void loop() {
         break;
       // para guardarme la ssid.
     }
-    //Serial2.flush();
+    // Serial2.flush();
   }
 }
 
 void sendToSerial2(int toSend) {
   char size_buffer[LENGTH_BYTES + 1];
-  char str[4]; // harcodeado
+  char str[4];  // harcodeado
 
-  sprintf(size_buffer, "%06d", int_length(toSend) + 2);
+  snprintf(size_buffer, sizeof(buffer), "%06d", int_length(toSend) + 2);
   Serial2.print(size_buffer);
   Serial2.println(toSend);
 }
@@ -120,7 +121,7 @@ void sendToSerial2(int toSend) {
 void sendToSerial2(String toSend) {
   char size_buffer[LENGTH_BYTES + 1];
 
-  sprintf(size_buffer, "%06d", toSend.length() + 2);
+  snprintf(size_buffer, sizeof(size_buffer), "%06d", toSend.length() + 2);
   Serial2.print(size_buffer);
   Serial2.println(toSend);
 }
@@ -141,7 +142,7 @@ size_t int_length(uint number) {
 
 Vector<String> parseParameters(const String & string) {
   size_t parameters_size = 0;
-  int index_from = -1, index_to; 
+  int index_from = -1, index_to;
   if (string.length() > 0) {
     parameters_size++;
   }
@@ -185,8 +186,7 @@ bool connectToWiFi(const String& ssid, const String& pwd) {
 
 bool disconnectFromWiFi() {
   bool response = WiFi.disconnect();
-  while (WiFi.status() == WL_CONNECTED)
-    ;
+  while (WiFi.status() == WL_CONNECTED) {}
   return response;
 }
 
@@ -210,14 +210,10 @@ void setAsAP() {
       ssid_connect = request->getParam("ssid_string")->value();
       pwd_connect = request->getParam("pwd_string")->value();
     }
-    else {
-      
-    }
     Serial.println(ssid_connect);
     Serial.println(pwd_connect);
 
     connect_to_wifi = true;
-
   });
   server.onNotFound(notFound);
   server.begin();
