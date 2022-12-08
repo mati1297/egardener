@@ -12,7 +12,9 @@
 // cambiar por iteradores donde pueda.
 
 TelegramBot::TelegramBot(WiFi &wifi, const std::string &token):
-                         wifi(wifi), token(token), last_update(-1) {
+                         wifi(wifi), token(token), last_update(-1) {}
+
+void TelegramBot::setup() {
   getMessages(0, 1);
 }
 

@@ -33,6 +33,7 @@ class TelegramBot {
 
  public:
   TelegramBot(WiFi &, const std::string &);
+  void setup();
   bool sendMessage(const std::string &, const std::string &);
 
   // validate correct.
