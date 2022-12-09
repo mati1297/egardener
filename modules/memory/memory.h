@@ -36,6 +36,10 @@ class Memory {
   bool read(uint16_t, bool &);
   bool write(uint16_t, int);
   bool read(uint16_t, int &);
+  bool write(uint16_t, uint8_t);
+  bool read(uint16_t, uint8_t&);
+  bool write(uint16_t, char);
+  bool read(uint16_t, char&);
   bool write(uint16_t, const std::string &);
   bool read(uint16_t, std::string &);
 };

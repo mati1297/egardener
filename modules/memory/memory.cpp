@@ -158,6 +158,44 @@ bool Memory::read(uint16_t address, int &number) {
   return true;
 }
 
+bool Memory::write(uint16_t address, uint8_t number) {
+  std::vector<uint8_t> vector(sizeof(uint8_t));
+
+  memcpy(&vector[0], reinterpret_cast<uint8_t *>(&number), sizeof(uint8_t));
+
+  return write(address, vector) == sizeof(uint8_t);
+}
+
+bool Memory::read(uint16_t address, uint8_t &number) {
+  std::vector<uint8_t> vector(sizeof(uint8_t));
+
+  if (read(address, vector) != sizeof(uint8_t))
+    return false;
+
+  memcpy(&number, &vector[0], sizeof(uint8_t));
+
+  return true;
+}
+
+bool Memory::write(uint16_t address, char character) {
+  std::vector<uint8_t> vector(sizeof(char));
+
+  memcpy(&vector[0], reinterpret_cast<uint8_t *>(&character), sizeof(char));
+
+  return write(address, vector) == sizeof(char);
+}
+
+bool Memory::read(uint16_t address, char &character) {
+  std::vector<uint8_t> vector(sizeof(char));
+
+  if (read(address, vector) != sizeof(char))
+    return false;
+
+  memcpy(&character, &vector[0], sizeof(char));
+
+  return true;
+}
+
 bool Memory::write(uint16_t address, const std::string &string) {
   size_t length = string.length();
   std::vector<uint8_t> vector(length + 1);
