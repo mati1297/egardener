@@ -13,35 +13,46 @@
 #define BUFFER_SIZE_TIME_12 11
 #define BUFFER_SIZE_DATE 10
 
-#define DAYS_OF_WEEK {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", \
-                      "Friday", "Saturday"}
+#define MAX_DAYS_SUM 30
+#define MAX_HOURS_SUM 23
+#define MAX_MINUTES_SUM 59
+#define MAX_SECONDS_SUM 59
 
-// ver despues como hacer con los dias de la semana. Los guardo con texto,
-// lo cambio en el constructor, en el llamado de sync, etc.
+#define MONTH_DAYS {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
 
+// El manejo es solo en 24 horas, se puede formatear para salida en 12.
 struct Time {
-  const uint8_t seconds;
-  const uint8_t minutes;
-  const uint8_t hours;
-  const bool pm;
-  const bool mode_twelve;
-  const uint8_t day;
-  const uint8_t date;
-  const uint8_t month;
-  const uint8_t year;
+ private:
+  uint8_t seconds;
+  uint8_t minutes;
+  uint8_t hours;
+  uint8_t day;
+  uint8_t month;
+  uint8_t year;
+
+ public: 
 
   Time(uint8_t seconds = 0, uint8_t minutes = 0, uint8_t hours = 0,
-       bool pm = false, bool mode_twelve = false, uint8_t day = 0,
-       uint8_t date = 0, uint8_t month = 0, uint8_t year = 0);
+       uint8_t day = 0, uint8_t month = 0, uint8_t year = 0);
 
-  Time() = delete;
+  Time(const Time&);
 
-  std::string formatTime() const;
+  Time& operator=(const Time&);
+  bool operator==(const Time&) const;
+  bool operator<(const Time&) const;
+  bool operator<=(const Time&) const;
+  bool operator>(const Time&) const;
+  bool operator>=(const Time&) const;
+
+  bool addSeconds(uint8_t);
+  bool addMinutes(uint8_t);
+  bool addHours(uint8_t);
+  bool addDays(uint8_t);
+
+  std::string formatTime(bool = false) const;
   std::string formatDate() const;
-  std::string formatDayWeek() const;
 
-  static std::string dayNumberToDayWord(uint8_t);
-  static uint8_t dayWordToDayNumber(const std::string &);
+  friend class Clock;
 
   // ver como eliminar constructor de struct por {}
 };

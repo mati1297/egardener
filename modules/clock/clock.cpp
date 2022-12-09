@@ -8,6 +8,8 @@
 #include "wifi.h"
 #include "Json.h"
 
+// CHEQUEAR QUE HAYA QUEDADO BIEN LO DEL DATE Y DAY. LO DE MODE TWELVE ETC. (CHEQUEAR BASICAMENTE QUE SE LEE BIEN LA HORA.)
+
 Clock::Clock(PinName SDA, PinName SCL, uint8_t address): rtc(SDA, SCL),
                                                          address(address << 1) {
   rtc.start();
@@ -31,13 +33,10 @@ bool Clock::set(const Time& time) {
   rtc.write(0x00u);
   rtc.write(dec2bcd(time.seconds) & 0x7F);
   rtc.write(dec2bcd(time.minutes) & 0x7F);
-  if (time.mode_twelve)
-    rtc.write(0x40 | (time.pm << 5 & 0x20) | (dec2bcd(time.hours) & 0x1F));
-  else
-    rtc.write(dec2bcd(time.hours) & 0x3F);
+  rtc.write(dec2bcd(time.hours) & 0x3F);
 
-  rtc.write(time.day & 0x07);
-  rtc.write(dec2bcd(time.date) & 0x3F);
+  rtc.write(1 & 0x07);
+  rtc.write(dec2bcd(time.day) & 0x3F);
   rtc.write(dec2bcd(time.month) & 0x1F);
   rtc.write(dec2bcd(time.year));
   rtc.stop();
@@ -45,9 +44,7 @@ bool Clock::set(const Time& time) {
 }
 
 Time Clock::get() {
-  uint8_t seconds, minutes, hours, day, date, month, year;
-  bool pm, mode_twelve;
-  uint8_t hours_read;
+  uint8_t seconds, minutes, hours, day, month, year;
 
   rtc.start();
   rtc.write(address | 0);
@@ -58,25 +55,16 @@ Time Clock::get() {
   rtc.write(address | 1);
   seconds = bcd2dec(rtc.read(1) & 0x7F);
   minutes = bcd2dec(rtc.read(1) & 0x7F);
-  hours_read = rtc.read(1);
-  if (hours_read & 0x40) {
-    hours = bcd2dec(hours_read & 0x1F);
-    pm = hours_read & 0x20;
-    mode_twelve = true;
-  } else {
-    hours = bcd2dec(hours_read & 0x3F);
-    mode_twelve = false;
-  }
+  hours = bcd2dec(rtc.read(1) & 0x3F);
 
-  day = rtc.read(1) & 0x07;
-  date = bcd2dec(rtc.read(1) & 0x3F);
+  rtc.read(1);
+  day = bcd2dec(rtc.read(1) & 0x3F);
   month = bcd2dec(rtc.read(1) & 0x1F);
   year = bcd2dec(rtc.read(0));
 
   rtc.stop();
 
-  return Time(seconds, minutes, hours, pm, mode_twelve, day, date, month,
-              year);
+  return Time(seconds, minutes, hours, day, month, year);
 }
 
 // agregar twelve.
@@ -106,80 +94,188 @@ bool Clock::sync(WiFi& wifi, const std::string& timezone) {
   json.tokenIntegerValue(json.findChildIndexOf(json.findKeyIndex("year")),
                          year);
 
-  std::string dayOfWeek = json.tokenString(json.findChildIndexOf(
-                                           json.findKeyIndex("dayOfWeek")));
-
-  Time time(seconds, minutes, hours, false, false,
-            Time::dayWordToDayNumber(dayOfWeek), date, month, year % 100);
+  Time time(seconds, minutes, hours, date, month, year % 100);
 
   return set(time);
 }
 
-Time::Time(uint8_t seconds, uint8_t minutes, uint8_t hours, bool pm,
-           bool mode_twelve, uint8_t day, uint8_t date, uint8_t month,
-           uint8_t year): seconds(seconds), minutes(minutes), hours(hours),
-                          day(day), date(date), month(month), year(year),
-                          pm(pm), mode_twelve(mode_twelve) {
-  seconds = (seconds < 60) ? seconds : 0;
-  minutes = (minutes < 60) ? minutes : 0;
-  if (mode_twelve)
-    hours = (hours <= 12 && hours >= 1) ? hours : 12;
-  else
-    hours = (hours < 24) ? hours : 0;
-
-  day = (day <= 7 && day > 0) ? day : 1;
-  date = (date <= 31 && date > 0) ? date : 1;  // validar por mes?
-  month = (month <= 12 && month > 0) ? month : 1;
-  year = (year >= 0 && year <= 99) ? year : 0;
+Time::Time(uint8_t seconds, uint8_t minutes, uint8_t hours, uint8_t day,
+           uint8_t month, uint8_t year): seconds(seconds), minutes(minutes),
+           hours(hours), day(day), month(month), year(year) {
+  this->seconds = (this->seconds < 60) ? this->seconds : 0;
+  this->minutes = (this->minutes < 60) ? this->minutes : 0;
+  this->hours = (this->hours < 24) ? this->hours : 0;
+  this->day = (this->day <= 31 && this->day > 0) ? this->day : 1;
+  this->month = (this->month <= 12 && this->month > 0) ? this->month : 1;
+  this->year = (this->year >= 0 && this->year <= 99) ? this->year : 0;
 }
 
-std::string Time::formatTime() const {
-  if (mode_twelve) {
-    std::vector<char> buffer(BUFFER_SIZE_TIME_12 + 1);
+Time::Time(const Time& other) {
+  seconds = other.seconds;
+  minutes = other.minutes;
+  hours = other.hours;
+  day = other.day;
+  month = other.month;
+  year = other.year;
+}
 
-    snprintf(&buffer[0], BUFFER_SIZE_TIME_12 + 1, "%02u:%02u:%02u %s", hours,
+Time& Time::operator=(const Time& other) {
+  seconds = other.seconds;
+  minutes = other.minutes;
+  hours = other.hours;
+  day = other.day;
+  month = other.month;
+  year = other.year;
+  return *this;
+}
+
+bool Time::addDays(uint8_t days) {
+  if (days > MAX_DAYS_SUM)
+    return false;
+
+  uint8_t monthDays[] = MONTH_DAYS;
+
+  uint8_t maxDaysMonth = monthDays[month - 1];
+  if (month == 2 && year%4 == 0)
+    maxDaysMonth = 29;
+
+  bool carry;
+
+  day += days;
+  carry = day > maxDaysMonth;
+  day -= maxDaysMonth * carry;
+
+  month += carry;
+  carry = month > 12;
+  month -= carry * 12;
+
+  year += carry;
+  
+  return true;
+}
+
+bool Time::addHours(uint8_t hours_) {
+  if (hours_ > MAX_HOURS_SUM)
+    return false;
+
+  bool carry;
+  hours += hours_;
+  carry = hours >= 24;
+  hours -= carry * 24;
+
+  addDays(carry);
+
+  return true;
+}
+
+bool Time::addMinutes(uint8_t minutes_) {
+  if (minutes_ > MAX_MINUTES_SUM)
+    return false;
+
+  bool carry;
+  minutes += minutes_;
+  carry = minutes >= 60;
+  minutes -= carry * 60;
+
+  addHours(carry);
+
+  return true;
+}
+
+bool Time::addSeconds(uint8_t seconds_) {
+  if (seconds_ > MAX_SECONDS_SUM)
+    return false;
+
+  bool carry;
+  seconds += seconds_;
+  carry = seconds >= 60;
+  seconds -= carry * 60;
+
+  addMinutes(carry);
+
+  return true;
+}
+
+bool Time::operator==(const Time& other) const {
+  return seconds == other.seconds && minutes == other.minutes
+  && hours == other.hours && day == other.day && month == other.month
+  && year == other.year;
+}
+
+bool Time::operator<(const Time& other) const {
+  if (*this == other)
+    return false;
+  
+  if (year > other.year) return false;
+  if (year < other.year) return true;
+  if (month > other.month) return false;
+  if (month < other.month) return true;
+  if (day > other.day) return false;
+  if (day < other.day) return true;
+  if (hours > other.hours) return false;
+  if (hours < other.hours) return true;
+  if (minutes > other.minutes) return false;
+  if (minutes < other.minutes) return true;
+  if (seconds > other.seconds) return false;
+  if (seconds < other.seconds) return true;
+
+  return false;
+
+
+  // TODO(matiascharrut) refactorizar.
+  /*result = result && year <= other.year;
+  result = result && month <= other.month;
+  result = result && day <= other.day;
+  result = result && hours <= other.hours;
+  result = result && minutes <= other.minutes;
+  result = result && seconds <= other.seconds;
+
+  return result;*/
+}
+
+bool Time::operator<=(const Time& other) const {
+  return *this < other || *this == other;
+}
+
+bool Time::operator>(const Time& other) const {
+  return other < *this;
+}
+
+bool Time::operator>=(const Time& other) const {
+  return *this > other || *this == other;
+}
+
+std::string Time::formatTime(bool twelve) const {
+  if (twelve) {
+    char buffer[BUFFER_SIZE_TIME_12 + 1];
+
+    uint8_t mod_hours = hours;
+    bool pm = mod_hours >= 12;
+
+    if (pm)
+      mod_hours -= 12;
+    if (mod_hours == 0)
+      mod_hours += 12;
+
+    snprintf(buffer, sizeof(buffer), "%02u:%02u:%02u %s", mod_hours,
              minutes, seconds, pm ? "PM" : "AM");
 
-    return std::string(&buffer[0]);
+    return std::string(buffer);
   } else {
-    std::vector<char> buffer(BUFFER_SIZE_TIME_24 + 1);
+    char buffer[BUFFER_SIZE_TIME_24 + 1];
 
-    snprintf(&buffer[0], BUFFER_SIZE_TIME_24 + 1, "%02u:%02u:%02u", hours,
+    snprintf(buffer, sizeof(buffer), "%02u:%02u:%02u", hours,
              minutes, seconds);
 
-    return std::string(&buffer[0]);
+    return std::string(buffer);
   }
 }
 
 std::string Time::formatDate() const {
   std::vector<char> buffer(BUFFER_SIZE_DATE + 1);
 
-  snprintf(&buffer[0], BUFFER_SIZE_DATE + 1, "%02u/%02u/20%02u", date, month,
+  snprintf(&buffer[0], BUFFER_SIZE_DATE + 1, "%02u/%02u/20%02u", day, month,
            year);
 
   return std::string(&buffer[0]);
-}
-
-std::string Time::formatDayWeek() const {
-  return dayNumberToDayWord(day);
-}
-
-std::string Time::dayNumberToDayWord(uint8_t dayNumber) {
-  std::string days[] = DAYS_OF_WEEK;
-
-  if (dayNumber == 0 || dayNumber > 7)
-    return days[0];
-
-  return days[dayNumber - 1];
-}
-
-uint8_t Time::dayWordToDayNumber(const std::string &dayWord) {
-  std::string days[] = DAYS_OF_WEEK;
-
-  for (uint8_t i = 0; i < 7; i++) {
-    if (dayWord == days[i])
-      return i + 1;
-  }
-
-  return 1;
 }
