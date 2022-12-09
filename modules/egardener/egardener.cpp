@@ -19,6 +19,7 @@
 #include "aux_functions.h"
 
 // hacer que guarde un user y listo.
+// o hacer con contraseña?
 eGardener::eGardener(): memoryDist(),
             wifi(WIFI_SERIAL_TX_PIN, WIFI_SERIAL_RX_PIN,
                WIFI_BAUDRATE),
@@ -60,7 +61,7 @@ void eGardener::execute() {
           setSenseIntervalActivated(message.from_id, false);
         else if (message.text == "/senseintervalstatus")
           sendSenseIntervalStatus(message.from_id);
-        else if (message.text.substr(0, 14) == "/setsenseinterval ")
+        else if (message.text.substr(0, 18) == "/setsenseinterval ")
           setSenseInterval(message);
         else if (message.text == "/nextsensetime")
           sendNextSenseTime(message.from_id);
@@ -198,7 +199,7 @@ void eGardener::sendNextSenseTime(const std::string& user_id) {
 void eGardener::setSenseInterval(const TelegramMessage& message) {
   size_t idx = 0;
 
-  std::string parameter = message.text.substr(14);
+  std::string parameter = message.text.substr(18);
 
   char *endptr;
 
