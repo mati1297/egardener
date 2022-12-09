@@ -70,6 +70,7 @@ class eGardener {
   void activateCheckMessages();
   void activateCheckClock();
 
+  void sendWelcomeMessage(const std::string&);
   void sendTemperature(const std::string&);
   void sendHumidity(const std::string&);
   void sendLight(const std::string&);

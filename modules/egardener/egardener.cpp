@@ -45,7 +45,9 @@ void eGardener::execute() {
                                               MAX_AMOUNT_TELEGRAM_MESSAGES);
       for (auto message : messages) {
         // format output
-        if (message.text == "/temperature")
+        if (message.text == "/start")
+          sendWelcomeMessage(message.from_id);
+        else if (message.text == "/temperature")
           sendTemperature(message.from_id);
         else if (message.text == "/humidity")
           sendHumidity(message.from_id);
@@ -88,6 +90,10 @@ void eGardener::activateCheckMessages() {
 
 void eGardener::activateCheckClock() {
   checkClock = true;
+}
+
+void eGardener::sendWelcomeMessage(const std::string& user_id) {
+  bot.sendMessage(user_id, "Welcome to eGardener!");
 }
 
 void eGardener::sendTemperature(const std::string& user_id) {
