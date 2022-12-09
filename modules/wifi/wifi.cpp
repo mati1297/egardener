@@ -11,7 +11,8 @@
 WiFi::WiFi(PinName tx_pin, PinName rx_pin, int baud):
            serial(tx_pin, rx_pin, baud), ssid(), pwd() {
   // ver lo de que cuando inicio sin reiniciar el otro se rompe.
-  serial.sync();
+  //serial.sync();
+  ThisThread::sleep_for(1s); // Doy tiempo a inicializar el serial.
 }
 
 std::string WiFi::readNBytes(size_t size) {
@@ -34,7 +35,8 @@ std::string WiFi::readToString() {
   char *endptr;
   size_t size = strtoul(size_buffer.c_str(), &endptr, 10);
 
-  // verificar endptr
+  if (*endptr == size_buffer[0])
+    return std::string();
 
   std::string buffer = readNBytes(size);
   return buffer;
@@ -68,11 +70,18 @@ WiFiStatus WiFi::getStatus() {
   serial.write(str.c_str(), str.length());
 
   std::string response = readToString();
-  return (WiFiStatus)stoul(response);
+
+  char * endptr;
+  unsigned long code = strtoul(response.c_str(), &endptr, 10);
+
+  if (*endptr == response[0])
+    return WiFiStatus::WL_FAILED_COMM;
+
+  return (WiFiStatus)code;
 }
 
-std::string WiFi::post(const std::string &url) {
-  std::string str = "p" + url + "\n";
+std::string WiFi::post(const std::string &server, const std::string &request) {
+  std::string str = "p" + server + "," + request + "\n";
 
   serial.write(str.c_str(), str.length());
 

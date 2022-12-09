@@ -20,10 +20,10 @@ void TelegramBot::setup() {
 
 bool TelegramBot::sendMessage(const std::string &chat_id,
                               const std::string &message) {
-  std::string url = "https://api.telegram.org/bot" + token +
-                    "/sendMessage?chat_id=" + chat_id + "&text=" + message;
+  std::string server = "https://api.telegram.org/bot" + token + "/sendMessage";
+  std::string request = "chat_id=" + chat_id + "&text=" + message;
 
-  std::string response = wifi.post(url);
+  std::string response = wifi.post(server, request);
 
   Json json(response.c_str(), response.length());
 
@@ -45,11 +45,11 @@ std::vector<TelegramMessage> TelegramBot::getMessages(size_t limit) {
 
 std::vector<TelegramMessage> TelegramBot::getMessages(size_t offset,
                                                       size_t limit) {
-  std::string url = "https://api.telegram.org/bot" + token +
-                    "/getUpdates?offset=" + std::to_string(offset) + "&limit="
+  std::string server = "https://api.telegram.org/bot" + token + "/getUpdates";
+  std::string request = "offset=" + std::to_string(offset) + "&limit="
                     + std::to_string(limit);
 
-  std::string response = wifi.post(url);
+  std::string response = wifi.post(server, request);
 
   std::vector<TelegramMessage> messages;
 
