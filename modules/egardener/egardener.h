@@ -36,10 +36,16 @@
 #define MAX_PWD_LENGTH 31  // para que entre en una pagina de la eeprom.
 
 #define WIFI_CONNECT_TRIES 3
-#define TIMEZONE "America/Argentina/Buenos-Aires"
+#define TIMEZONE "America/Argentina/Buenos_Aires"
 #define MAX_AMOUNT_TELEGRAM_MESSAGES 5
+
 #define TELEGRAM_POLL_TIME 1000ms
 #define TELEGRAM_POLL_TIME_WAITING 250ms
+#define CLOCK_POLL_TIME 5s
+
+#define TEMPERATURE_EMOJI "\xE2\x99\xA8"
+#define HUMIDITY_EMOJI "\xF0\x9F\x92\xA7"
+#define LIGHT_EMOJI "\xF0\x9F\x8C\x9E"
 
 class eGardener {
  private:
@@ -50,13 +56,31 @@ class eGardener {
   Memory eeprom;
   TRHSensor trhSensor;
   LightSensor lightSensor;
-  Ticker ticker;
-  bool checkMessages;
+  TelegramBot bot;
+  Ticker tickerCheckMessages, tickerCheckClock;
+  bool checkMessages, checkClock, senseIntervalActivated;
+  
+  uint8_t senseInterval;
+  char senseIntervalUnit;
+  Time senseTargetTime;
 
   void setupMemoryDist();
   void setup();
   std::string getTelegramResponseForInteraction(TelegramBot &);
   void activateCheckMessages();
+  void activateCheckClock();
+
+  void sendTemperature(const std::string&);
+  void sendHumidity(const std::string&);
+  void sendLight(const std::string&);
+  void sendSenseAll(const std::string&);
+  void calibrateLightSensor(const std::string&);
+  void setSenseInterval(const TelegramMessage&);
+  void setSenseIntervalActivated(const std::string&, bool activated);
+  void sendSenseIntervalStatus(const std::string&);
+  void sendNextSenseTime(const std::string&);
+
+  Time calculateTargetTime(uint8_t interval, char unit);
 
  public:
   eGardener();

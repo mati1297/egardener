@@ -29,35 +29,14 @@ eGardener::eGardener(): memoryDist(),
                  ADDRESS_EEPROM),
             trhSensor(I2C_PORT2_SDA_PIN, I2C_PORT2_SCL_PIN,
                   ADDRESS_SENSOR_RH_TEMP),
-            lightSensor(LIGHT_SENSOR_PIN), ticker(),
-            checkMessages(false) {
+            lightSensor(LIGHT_SENSOR_PIN), bot(wifi, TELEGRAM_BOT_TOKEN),
+            tickerCheckMessages(), tickerCheckClock(), checkMessages(false),
+            checkClock(false), senseIntervalActivated(false), senseInterval(30), 
+            senseIntervalUnit('d'), senseTargetTime() {
   setup();
 }
 
 void eGardener::execute() {
-  printf("Inicializando...\n");
-
-  uint8_t wifiTryCounter = 0;
-  while (wifi.getStatus() != WiFiStatus::WL_CONNECTED
-         && wifiTryCounter < WIFI_CONNECT_TRIES) {
-    printf("Conectando a Wi-Fi\n");
-    printf("%s\n", wifi_ssid.c_str());
-    wifi.connect(wifi_ssid, wifi_pwd);
-    wifiTryCounter++;
-  }
-  if (wifi.getStatus() == WiFiStatus::WL_CONNECTED) {
-    printf("Conectado a Wi-Fi\n");
-    rtc.sync(wifi, TIMEZONE);
-  } else {
-    printf("No se pudo conectar a Wi-Fi\n");
-  }
-
-  TelegramBot bot(wifi, TELEGRAM_BOT_TOKEN);
-
-  // setea tickers
-  ticker.attach(callback(this, &eGardener::activateCheckMessages),
-                TELEGRAM_POLL_TIME);
-
   // validar de quien viene y guardar en memoria.
   while (true) {
     if (checkMessages) {
@@ -65,54 +44,38 @@ void eGardener::execute() {
                                               MAX_AMOUNT_TELEGRAM_MESSAGES);
       for (auto message : messages) {
         // format output
-        if (message.text == "/temperature") {
-          bot.sendMessage(message.from_id,
-                          floatToString(trhSensor.senseTemperature(), 2));
-        } else if (message.text == "/humidity") {
-          bot.sendMessage(message.from_id,
-                          floatToString(trhSensor.senseHumidity(), 2));
-        } else if (message.text == "/light") {
-          float value = lightSensor.sense();
-          if (value < 0)
-            bot.sendMessage(message.from_id,
-                            R"(You need to calibrate light sensor with
-                             /calibrateLightSensor)");
-          else
-            bot.sendMessage(message.from_id,
-                            floatToString(value * 100, 2) + "%");
-        } else if (message.text == "/calibrateLightSensor") {
-          float min, max;
-
-          bot.sendMessage(message.from_id, R"(Put direct light on the sensor
-                                           with your phone flash and type ok (any
-                                           other text to cancel).)");
-          if (getTelegramResponseForInteraction(bot) != "ok") {
-            printf("Operation cancelled");
-            break;
-          }
-          max = lightSensor.sense(true);
-
-          bot.sendMessage(message.from_id, R"(Now put your finger on the sensor
-                                             type ok (any other text to cancel).)");
-          if (getTelegramResponseForInteraction(bot) != "ok") {
-                      bot.sendMessage(message.from_id, "Operation cancelled");
-            break;
-          }
-          min = lightSensor.sense(true);
-
-          if (lightSensor.setMaxAndMin(max, min)) {
-            bot.sendMessage(message.from_id, R"(Light sensor calibrated 
-                                                succesfully)");
-            auto address = memoryDist.find("ls")->second;
-            eeprom.write(address.first, true);
-            eeprom.write(address.first + sizeof(bool), max);
-            eeprom.write(address.first + sizeof(bool) + sizeof(float), min);
-          } else {
-            bot.sendMessage(message.from_id, "An error ocurred, try again");
-          }
-        }
+        if (message.text == "/temperature")
+          sendTemperature(message.from_id);
+        else if (message.text == "/humidity")
+          sendHumidity(message.from_id);
+        else if (message.text == "/light")
+          sendLight(message.from_id);
+        else if (message.text == "/calibrateLightSensor")
+          calibrateLightSensor(message.from_id);
+        else if(message.text == "/senseAll")
+          sendSenseAll(message.from_id);
+        else if (message.text == "/activateSenseInterval")
+          setSenseIntervalActivated(message.from_id, true); // si se activa queda desde el ultimo.
+        else if (message.text == "/deactivateSenseInterval")
+          setSenseIntervalActivated(message.from_id, false);
+        else if (message.text == "/senseIntervalStatus")
+          sendSenseIntervalStatus(message.from_id);
+        else if (message.text.substr(0, 14) == "/setSenseInterval ")
+          setSenseInterval(message);
+        else if (message.text == "/nextSenseTime")
+          sendNextSenseTime(message.from_id);
+        else
+          bot.sendMessage(message.from_id, "Command unknown");
       }
       checkMessages = false;
+    }
+    if (checkClock) {
+      Time time = rtc.get(); 
+      if (senseIntervalActivated && senseTargetTime <= time) {
+        senseTargetTime = calculateTargetTime(senseInterval, senseIntervalUnit);
+        sendSenseAll("561193522");
+      }
+      checkClock = false;
     }
     // Por ahora, despues con timers y booleans.
   }
@@ -122,7 +85,163 @@ void eGardener::activateCheckMessages() {
   checkMessages = true;
 }
 
+void eGardener::activateCheckClock() {
+  checkClock = true;
+}
+
+void eGardener::sendTemperature(const std::string& user_id) {
+  Time time = rtc.get();
+  bot.sendMessage(user_id, "[" + time.formatTime() + " " + time.formatDate() + "] " + 
+                  TEMPERATURE_EMOJI + (" " + 
+                  floatToString(trhSensor.senseTemperature(), 2)) + 
+                  "°C");
+}
+
+void eGardener::sendHumidity(const std::string& user_id) {
+  bot.sendMessage(user_id, HUMIDITY_EMOJI + (" " + 
+                  floatToString(trhSensor.senseHumidity(), 2)) + 
+                  "%");
+}
+
+void eGardener::sendLight(const std::string& user_id) {
+  float value = lightSensor.sense();
+  if (value < 0)
+    bot.sendMessage(user_id,
+                    R"(You need to calibrate light sensor with
+                      /calibrateLightSensor)");
+  else
+    bot.sendMessage(user_id, LIGHT_EMOJI + (" " + 
+                    floatToString(value * 100, 2)) + "%");
+}
+
+void eGardener::sendSenseAll(const std::string& user_id) {
+  float value = lightSensor.sense();
+  if (value < 0) {
+    bot.sendMessage(user_id,
+                    R"(You need to calibrate light sensor with
+                      /calibrateLightSensor)");
+  } else {
+    Time time = rtc.get();
+    std::string messageTime = "[" + time.formatTime() + " " + time.formatDate() + "]";
+    std::string temp = TEMPERATURE_EMOJI + (" " +
+                  floatToString(trhSensor.senseTemperature(), 2)) + 
+                  "°C";
+    std::string humidity = HUMIDITY_EMOJI + (" " + 
+                  floatToString(trhSensor.senseHumidity(), 2)) + 
+                  "% ";
+    std::string light = LIGHT_EMOJI + (" " +
+                  floatToString(value * 100, 2)) + "%";
+    bot.sendMessage(user_id, messageTime + "\n" + temp + "\n" + humidity + "\n" + light);
+  }
+}
+
+void eGardener::calibrateLightSensor(const std::string& user_id) {
+  float min, max;
+
+  bot.sendMessage(user_id, R"(Put direct light on the sensor
+                                    with your phone flash and type ok (any
+                                    other text to cancel).)");
+  if (getTelegramResponseForInteraction(bot) != "ok") {
+    printf("Operation cancelled");
+    return;
+  }
+  max = lightSensor.sense(true);
+
+  bot.sendMessage(user_id, R"(Now put your finger on the sensor
+                                      type ok (any other text to cancel).)");
+  if (getTelegramResponseForInteraction(bot) != "ok") {
+              bot.sendMessage(user_id, "Operation cancelled");
+    return;
+  }
+  min = lightSensor.sense(true);
+
+  if (lightSensor.setMaxAndMin(max, min)) {
+    bot.sendMessage(user_id, R"(Light sensor calibrated 
+                                        succesfully)");
+    auto address = memoryDist.find("ls")->second;
+    eeprom.write(address.first, true);
+    eeprom.write(address.first + sizeof(bool), max);
+    eeprom.write(address.first + sizeof(bool) + sizeof(float), min);
+  } else {
+    bot.sendMessage(user_id, "An error ocurred, try again");
+  }
+}
+
+void eGardener::setSenseIntervalActivated(const std::string& user_id, bool activated) {
+  senseIntervalActivated = activated;
+
+  auto address = memoryDist.find("st")->second;
+  eeprom.write(address.first, true);
+  eeprom.write(address.first + sizeof(bool), activated);
+  
+  std::string state = (activated ? "activated" : "deactivated");
+
+  bot.sendMessage(user_id, "Sense time has been " + state);
+}
+
+void eGardener::sendSenseIntervalStatus(const std::string& user_id) {
+  std::string state = senseIntervalActivated ? "activated" : "deactivated";
+  bot.sendMessage(user_id, "Sense interval is " + state +
+                  "\nSense interval is " + to_string(senseInterval) +
+                  senseIntervalUnit);
+}
+
+void eGardener::sendNextSenseTime(const std::string& user_id) {
+  bot.sendMessage(user_id, "Next sense at " + senseTargetTime.formatTime()
+                          + " " + senseTargetTime.formatDate());
+}
+
+void eGardener::setSenseInterval(const TelegramMessage& message) {
+  size_t idx = 0;
+
+  std::string parameter = message.text.substr(14);
+
+  char *endptr;
+
+  uint8_t newInterval = std::strtoul(parameter.c_str(), &endptr, 10);
+  char newUnit = *endptr;
+
+  // Crear macros
+  if ((newInterval < 60 && newInterval >= 10 && newUnit == 's') ||
+      (newInterval < 60 && newInterval > 0 && newUnit == 'm') ||
+      (newInterval < 24 && newInterval > 0 && newUnit == 'h') ||
+      (newInterval <= 30 && newInterval > 0 && newUnit == 'd')) {
+    senseInterval = newInterval;
+    senseIntervalUnit = newUnit;
+    senseTargetTime = calculateTargetTime(senseInterval, senseIntervalUnit);
+
+    auto address = memoryDist.find("st")->second;
+    eeprom.write(address.first, true);
+    eeprom.write(address.first + sizeof(bool) * 2, senseInterval);
+    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t), senseIntervalUnit);
+
+    bot.sendMessage(message.from_id, "Sense time set " + std::to_string(senseInterval)
+                                     + senseIntervalUnit);
+  } else {
+    bot.sendMessage(message.from_id, "El intervalo o la unidad no son correctos");
+  }
+  
+}
+
+Time eGardener::calculateTargetTime(uint8_t interval, char unit) {
+  Time result = rtc.get();
+  if (unit == 's')
+    result.addSeconds(interval);
+  else if (unit == 'm')
+    result.addMinutes(interval);
+  else if (unit == 'h')
+    result.addHours(interval);
+  else if (unit == 'd')
+    result.addDays(interval);
+  else
+    result = Time(0, 0, 0, 0, 0, 99);
+
+  return result;
+}
+
 void eGardener::setup() {
+  printf("Inicializando...\n");
+  printf("Cargando datos de EEPROM...\n");
   setupMemoryDist();
   bool there;
   // leo wifi.
@@ -142,6 +261,55 @@ void eGardener::setup() {
     eeprom.read(address.first + sizeof(bool) + sizeof(float), ls_min);
     lightSensor.setMaxAndMin(ls_max, ls_min);
   }
+  
+  address = memoryDist.find("st")->second;
+  
+  eeprom.read(address.first, there);
+  if (there) {
+    uint8_t interval;
+    char intervalUnit;
+    bool activated;
+    eeprom.read(address.first + sizeof(bool), activated);
+    eeprom.read(address.first + sizeof(bool) * 2, interval);
+    eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t), intervalUnit);
+    senseInterval = interval;
+    senseIntervalActivated = activated;
+    senseIntervalUnit = intervalUnit;
+  }
+  senseTargetTime = calculateTargetTime(senseInterval, senseIntervalUnit);
+
+
+  printf("Conectando a Wi-Fi...\n");
+
+  uint8_t wifiTryCounter = 0;
+  WiFiStatus status;
+  while ((status = wifi.getStatus()) != WiFiStatus::WL_CONNECTED
+         && wifiTryCounter < WIFI_CONNECT_TRIES) {
+    if (status == WiFiStatus::WL_FAILED_COMM) {
+      printf("Failed comm\n");
+      ThisThread::sleep_for(1s);
+      continue;
+    }
+    printf("Intento %u\n", wifiTryCounter);
+    wifi.connect(wifi_ssid, wifi_pwd);
+    wifiTryCounter++;
+  }
+  if (wifi.getStatus() == WiFiStatus::WL_CONNECTED) {
+    printf("Conectado a Wi-Fi correctamente\n");
+    rtc.sync(wifi, TIMEZONE);
+    bot.setup();
+  } else {
+    printf("No se pudo conectar a Wi-Fi\n");
+  }
+
+  printf("Configurando tickers...\n");
+  // setea tickers
+  tickerCheckMessages.attach(callback(this, &eGardener::activateCheckMessages),
+                TELEGRAM_POLL_TIME);
+  tickerCheckClock.attach(callback(this, &eGardener::activateCheckClock),
+                CLOCK_POLL_TIME);
+
+  printf("Listo!\n");
 }
 
 // devuelve todo en minusculas.
@@ -163,12 +331,17 @@ void eGardener::setupMemoryDist() {
   // las dudas.
 
   memoryDist.insert(std::pair<std::string, std::pair<uint16_t, uint8_t>>
-                    ("wifi", std::tuple<uint16_t, uint8_t>(position,
+                    ("wifi", std::pair<uint16_t, uint8_t>(position,
                      sizeof(bool) + MAX_SSID_LENGTH + MAX_PWD_LENGTH + 2)));
   position += sizeof(bool) + MAX_SSID_LENGTH + MAX_PWD_LENGTH;
 
   memoryDist.insert(std::pair<std::string, std::pair<uint16_t, uint8_t>>
-                    ("ls", std::tuple<uint16_t, uint8_t>(position,
+                    ("ls", std::pair<uint16_t, uint8_t>(position,
                      sizeof(bool) + sizeof(float) * 2)));
   position += sizeof(bool) + sizeof(float) * 2;
+
+  memoryDist.insert(std::pair<std::string, std::pair<uint16_t, uint8_t>>
+                    ("st", std::pair<uint16_t, uint8_t>(position,
+                    sizeof(bool) * 2+ sizeof(uint8_t) + sizeof(char))));
+  position = sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char);
 }
