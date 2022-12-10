@@ -70,7 +70,7 @@ void loop() {
     ssize_t params_size = 0;
     Vector<String> params = parseParameters(received.substring(1));
     Serial.println(received);
-
+    Serial.println(cmd);
     switch (cmd) {
       case 'c':
         if (params_size > 2)
@@ -81,12 +81,13 @@ void loop() {
       case 'w':
         if (params_size > 0)
           Serial.println("Error en cantidad de parametros");
+        Serial.println(getWiFiStatus());
         sendToSerial2(getWiFiStatus());
         break;
       case 'p':
-        if (params_size > 1)
+        if (params_size > 2)
           Serial.println("Error en cantidad de parametros");
-        sendToSerial2(post(params[0]));
+        sendToSerial2(post(params[0], params[1]));
         break;
       case 'g':
         if (params_size > 1)
@@ -113,7 +114,7 @@ void sendToSerial2(int toSend) {
   char size_buffer[LENGTH_BYTES + 1];
   char str[4];  // harcodeado
 
-  snprintf(size_buffer, sizeof(buffer), "%06d", int_length(toSend) + 2);
+  snprintf(size_buffer, sizeof(size_buffer), "%06d", int_length(toSend) + 2);
   Serial2.print(size_buffer);
   Serial2.println(toSend);
 }
@@ -223,10 +224,14 @@ void notFound(AsyncWebServerRequest *request) {
   request->send(404, "text/plain", "Not found");
 }
 
-String post(String url) {
+// TODO(matiascharrut) chequear que el wifi este conectado
+String post(String server, String request) {
   HTTPClient http;
-  http.begin(url);
-  http.POST(url);
+  Serial.println("Server = " + server);
+  Serial.println("Request = " + request);
+  http.begin(server);
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+  http.POST(request);
   String response = http.getString();
   http.end();
   return response;
