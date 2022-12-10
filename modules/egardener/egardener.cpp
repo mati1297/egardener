@@ -17,6 +17,7 @@
 #include "trh_sensor.h"
 #include "light_sensor.h"
 #include "aux_functions.h"
+#include "control.h"
 
 // hacer que guarde un user y listo.
 // o hacer con contraseña?
@@ -30,9 +31,11 @@ eGardener::eGardener(): memoryDist(),
                  ADDRESS_EEPROM),
             trhSensor(I2C_PORT2_SDA_PIN, I2C_PORT2_SCL_PIN,
                   ADDRESS_SENSOR_RH_TEMP),
-            lightSensor(LIGHT_SENSOR_PIN), bot(wifi, TELEGRAM_BOT_TOKEN),
-            tickerCheckMessages(), tickerCheckClock(), checkMessages(false),
-            checkClock(false), senseIntervalActivated(false), senseInterval(30), 
+            lightSensor(LIGHT_SENSOR_PIN), bot(wifi, TELEGRAM_BOT_TOKEN), control(),
+            tickerCheckMessages(), tickerCheckClock(), tickerCheckControlCondition(),
+            checkMessages(false), checkClock(false), senseIntervalActivated(false), checkControlConditionFlag(false),
+            controlConditionActivated(true),
+            senseInterval(30), 
             senseIntervalUnit('d'), senseTargetTime() {
   setup();
 }
@@ -67,6 +70,8 @@ void eGardener::execute() {
           setSenseInterval(message);
         else if (message.text == "/nextsensetime")
           sendNextSenseTime(message.from_id);
+        else if (message.text.substr(0, 22) == "/setcontrolconditions ")
+          setControlConditions(message);
         else
           bot.sendMessage(message.from_id, "Command unknown");
       }
@@ -76,9 +81,18 @@ void eGardener::execute() {
       Time time = rtc.get(); 
       if (senseIntervalActivated && senseTargetTime <= time) {
         senseTargetTime = calculateTargetTime(senseInterval, senseIntervalUnit);
-        sendSenseAll("561193522");
+        sendSenseAll(USER);
       }
       checkClock = false;
+    }
+    if (checkControlConditionFlag) {
+      bool acti = checkControlConditions('w');
+      printf("chequeo = %d\n", acti);
+      if (acti)
+        control.activateWater();
+      else
+        control.deactivateWater();
+      checkControlConditionFlag = false;
     }
     // Por ahora, despues con timers y booleans.
   }
@@ -90,6 +104,10 @@ void eGardener::activateCheckMessages() {
 
 void eGardener::activateCheckClock() {
   checkClock = true;
+}
+
+void eGardener::activateCheckControlCondition() {
+  checkControlConditionFlag = true;
 }
 
 void eGardener::sendWelcomeMessage(const std::string& user_id) {
@@ -319,6 +337,8 @@ void eGardener::setup() {
                 TELEGRAM_POLL_TIME);
   tickerCheckClock.attach(callback(this, &eGardener::activateCheckClock),
                 CLOCK_POLL_TIME);
+  tickerCheckControlCondition.attach(callback(this, &eGardener::activateCheckControlCondition),
+                CONTROL_CONDITION_POLL_TIME);
 
   printf("Listo!\n");
 }
@@ -355,4 +375,139 @@ void eGardener::setupMemoryDist() {
                     ("st", std::pair<uint16_t, uint8_t>(position,
                     sizeof(bool) * 2+ sizeof(uint8_t) + sizeof(char))));
   position = sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char);
+}
+
+void eGardener::setControlConditions(const TelegramMessage& message) {
+  std::string toParse = message.text.substr(22);
+  char variableToSet;
+
+  printf("%s\n", toParse.c_str());
+
+  int i;
+
+  for (i = 0; i < toParse.length(); i++) {
+    if (toParse[i] == ' ')
+      continue;
+    if (toParse[i] == 'w') {
+      variableToSet = 'w';
+      break;
+    }
+    else if (toParse[i] == 'l') {
+      variableToSet = 'l';
+      break;
+    }
+    else {
+      bot.sendMessage(message.from_id, "Wrong variable to set");
+      return;
+    }
+  }
+
+  auto conditions = parseVariableConditions(toParse.substr(i+1));
+
+  if (conditions.empty()) {
+    bot.sendMessage(message.from_id, "Wrong conditions input");
+    return;
+  }
+
+  if (variableToSet == 'w')
+    controlConditionsWater = conditions;
+  else if (variableToSet == 'l')
+    controlConditionsLight = conditions;
+
+  bot.sendMessage(message.from_id, "Control conditions for " + (variableToSet + std::string(" set succesfully")));
+}
+
+bool eGardener::checkControlConditions(char variable) {
+  bool activate = true;
+  std::map<char, controlConditionPair> conditions;
+
+  if (variable == 'w')
+    conditions = controlConditionsWater;
+  else if (variable == 'l')
+    conditions = controlConditionsLight;
+  else
+    return false;
+
+  if (conditions.empty())
+    return false;
+    
+
+  for (auto it = conditions.begin(); it != conditions.end(); it++) {
+    float variable;
+    printf("%c: %d, %u\n", it->first, it->second.first, it->second.second);
+    switch (it->first) {
+      case 'l':
+        // validar si esta calibrado
+        variable = lightSensor.sense() * 100;
+        printf("variable chequeada = %f", variable);
+        break;
+      case 't':
+        variable = trhSensor.senseTemperature();
+        break;
+      case 'h':
+        variable = trhSensor.senseHumidity();
+        break;
+    }
+    if (it->second.first == ControlSymbol::LESS)
+      activate = activate && variable <= it->second.second;
+    else if (it->second.first == ControlSymbol::GREAT)
+      activate = activate && variable >= it->second.second;
+  }
+
+  return activate;
+}
+
+std::map<char, eGardener::controlConditionPair>eGardener::parseVariableConditions(const std::string& input) {
+  char parameter = 0;
+  ControlSymbol symbol = ControlSymbol::NOTHING;
+  std::string valueString;
+  std::map<char, controlConditionPair> result;
+
+  for (auto c : input + ',') {
+    if (c == ' ')
+      continue;
+    if (!parameter) {
+      if (result.find(parameter) != result.end())
+        return std::map<char, controlConditionPair>();
+      if (c == CONTROL_TEMPERATURE_CHAR || c == CONTROL_LIGHT_CHAR || c == CONTROL_HUMIDITY_CHAR) {
+        parameter = c;
+        continue;
+      }
+    }
+    if (symbol == ControlSymbol::NOTHING) {
+      switch (c) {
+        case CONTROL_LESS_CHAR:
+          symbol = ControlSymbol::LESS;
+          break;
+        case CONTROL_GREAT_CHAR:
+          symbol = ControlSymbol::GREAT;
+          break;
+        default:
+          return std::map<char, controlConditionPair>();
+      }
+      continue;
+    }
+    if (c == ',') {
+      uint8_t value;
+      char * endptr;
+      if (valueString.length() > CONTROL_MAX_NUMBER_LENGTH || valueString.length() < 1)
+        return std::map<char, controlConditionPair>();
+      uint16_t valueLong = strtoul(valueString.c_str(), &endptr, 10);
+      // aclarar que es con punto.
+      if (*endptr || *endptr == '.' || valueLong > 255)
+        return std::map<char, controlConditionPair>();
+      value = valueLong;
+      result.insert(std::pair<char, controlConditionPair>(parameter, controlConditionPair(symbol, value)));
+      valueString.erase();
+      parameter = 0;
+      symbol = ControlSymbol::NOTHING;
+      continue;
+    }
+    if (isdigit(c) || c == '.') {
+      valueString += c;
+      continue;
+    }
+    return std::map<char, controlConditionPair>();
+  }
+  return result;
 }

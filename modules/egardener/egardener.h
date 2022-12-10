@@ -18,6 +18,7 @@
 #include "trh_sensor.h"
 #include "light_sensor.h"
 #include "aux_functions.h"
+#include "control.h"
 
 #define I2C_PORT2_SDA_PIN PB_9
 #define I2C_PORT2_SCL_PIN PB_8
@@ -42,13 +43,32 @@
 #define TELEGRAM_POLL_TIME 1000ms
 #define TELEGRAM_POLL_TIME_WAITING 250ms
 #define CLOCK_POLL_TIME 5s
+#define CONTROL_CONDITION_POLL_TIME 5s
 
 #define TEMPERATURE_EMOJI "\xE2\x99\xA8"
 #define HUMIDITY_EMOJI "\xF0\x9F\x92\xA7"
 #define LIGHT_EMOJI "\xF0\x9F\x8C\x9E"
 
+#define CONTROL_DELIMITER ','
+#define CONTROL_GREAT_CHAR '>'
+#define CONTROL_LESS_CHAR '<'
+
+#define CONTROL_HUMIDITY_CHAR 'h'
+#define CONTROL_TEMPERATURE_CHAR 't'
+#define CONTROL_LIGHT_CHAR 'l'
+
+#define CONTROL_MAX_NUMBER_LENGTH 3
+
 class eGardener {
  private:
+  enum ControlSymbol {
+    NOTHING,
+    GREAT,
+    LESS
+  };
+
+  typedef std::pair<ControlSymbol, uint8_t> controlConditionPair;
+
   std::map<std::string, std::pair<uint16_t, uint8_t>> memoryDist;
   std::string wifi_ssid, wifi_pwd;
   WiFi wifi;
@@ -57,18 +77,23 @@ class eGardener {
   TRHSensor trhSensor;
   LightSensor lightSensor;
   TelegramBot bot;
-  Ticker tickerCheckMessages, tickerCheckClock;
+  Control control;
+  Ticker tickerCheckMessages, tickerCheckClock, tickerCheckControlCondition;
   bool checkMessages, checkClock, senseIntervalActivated;
+  bool checkControlConditionFlag, controlConditionActivated;
   
   uint8_t senseInterval;
   char senseIntervalUnit;
   Time senseTargetTime;
+
+  std::map<char, std::pair<ControlSymbol, uint8_t>> controlConditionsWater, controlConditionsLight;
 
   void setupMemoryDist();
   void setup();
   std::string getTelegramResponseForInteraction(TelegramBot &);
   void activateCheckMessages();
   void activateCheckClock();
+  void activateCheckControlCondition();
 
   void sendWelcomeMessage(const std::string&);
   void sendTemperature(const std::string&);
@@ -80,6 +105,10 @@ class eGardener {
   void setSenseIntervalActivated(const std::string&, bool activated);
   void sendSenseIntervalStatus(const std::string&);
   void sendNextSenseTime(const std::string&);
+  void setControlConditions(const TelegramMessage&);
+  bool checkControlConditions(char);
+
+  std::map<char, std::pair<ControlSymbol, uint8_t>>parseVariableConditions(const std::string& input);
 
   Time calculateTargetTime(uint8_t interval, char unit);
 

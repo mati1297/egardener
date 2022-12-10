@@ -8,6 +8,7 @@
 #include "mbed.h"
 
 #define BUFFER_SIZE 100
+#define SEPARATOR_CHAR char(254)
 
 enum WiFiStatus {
   WL_NO_SHIELD = 255,
