@@ -19,6 +19,7 @@
 #include "aux_functions.h"
 
 // hacer que guarde un user y listo.
+// o hacer con contraseña?
 eGardener::eGardener(): memoryDist(),
             wifi(WIFI_SERIAL_TX_PIN, WIFI_SERIAL_RX_PIN,
                WIFI_BAUDRATE),
@@ -50,19 +51,19 @@ void eGardener::execute() {
           sendHumidity(message.from_id);
         else if (message.text == "/light")
           sendLight(message.from_id);
-        else if (message.text == "/calibrateLightSensor")
+        else if (message.text == "/calibratelightsensor")
           calibrateLightSensor(message.from_id);
-        else if(message.text == "/senseAll")
+        else if(message.text == "/senseall")
           sendSenseAll(message.from_id);
-        else if (message.text == "/activateSenseInterval")
+        else if (message.text == "/activatesenseinterval")
           setSenseIntervalActivated(message.from_id, true); // si se activa queda desde el ultimo.
-        else if (message.text == "/deactivateSenseInterval")
+        else if (message.text == "/deactivatesenseinterval")
           setSenseIntervalActivated(message.from_id, false);
-        else if (message.text == "/senseIntervalStatus")
+        else if (message.text == "/senseintervalstatus")
           sendSenseIntervalStatus(message.from_id);
-        else if (message.text.substr(0, 14) == "/setSenseInterval ")
+        else if (message.text.substr(0, 18) == "/setsenseinterval ")
           setSenseInterval(message);
-        else if (message.text == "/nextSenseTime")
+        else if (message.text == "/nextsensetime")
           sendNextSenseTime(message.from_id);
         else
           bot.sendMessage(message.from_id, "Command unknown");
@@ -91,26 +92,30 @@ void eGardener::activateCheckClock() {
 
 void eGardener::sendTemperature(const std::string& user_id) {
   Time time = rtc.get();
-  bot.sendMessage(user_id, "[" + time.formatTime() + " " + time.formatDate() + "] " + 
+  bot.sendMessage(user_id, "[" + time.formatTime() + " " + time.formatDate() + "] " +
                   TEMPERATURE_EMOJI + (" " + 
                   floatToString(trhSensor.senseTemperature(), 2)) + 
                   "°C");
 }
 
 void eGardener::sendHumidity(const std::string& user_id) {
-  bot.sendMessage(user_id, HUMIDITY_EMOJI + (" " + 
+  Time time = rtc.get();
+  bot.sendMessage(user_id, "[" + time.formatTime() + " " + time.formatDate() + "] " +
+                  HUMIDITY_EMOJI + (" " + 
                   floatToString(trhSensor.senseHumidity(), 2)) + 
                   "%");
 }
 
 void eGardener::sendLight(const std::string& user_id) {
+  Time time = rtc.get();
   float value = lightSensor.sense();
   if (value < 0)
     bot.sendMessage(user_id,
                     R"(You need to calibrate light sensor with
                       /calibrateLightSensor)");
   else
-    bot.sendMessage(user_id, LIGHT_EMOJI + (" " + 
+    bot.sendMessage(user_id, "[" + time.formatTime() + " " + time.formatDate() + "] " +
+                    LIGHT_EMOJI + (" " + 
                     floatToString(value * 100, 2)) + "%");
 }
 
@@ -194,7 +199,7 @@ void eGardener::sendNextSenseTime(const std::string& user_id) {
 void eGardener::setSenseInterval(const TelegramMessage& message) {
   size_t idx = 0;
 
-  std::string parameter = message.text.substr(14);
+  std::string parameter = message.text.substr(18);
 
   char *endptr;
 
