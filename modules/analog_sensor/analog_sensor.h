@@ -9,7 +9,7 @@
 #define VOLTAGE_REF_DEFAULT 3.3
 #define AVERAGE_POINTS_DEFAULT 10
 
-class LightSensor {
+class AnalogSensor {
  private:
   AnalogIn analog;
   float max, min;
@@ -18,7 +18,7 @@ class LightSensor {
   float senseRaw();
 
  public:
-  LightSensor(PinName, float vref = VOLTAGE_REF_DEFAULT,
+  AnalogSensor(PinName, float vref = VOLTAGE_REF_DEFAULT,
               uint8_t = AVERAGE_POINTS_DEFAULT);
   void calibrateMax();
   void calibrateMin();

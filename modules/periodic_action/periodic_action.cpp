@@ -107,6 +107,11 @@ bool PeriodicAction::setDuration(uint8_t duration, char durationUnit) {
   if (!validateTimeAndUnit(duration, durationUnit))
     return false;
 
+  if (executing) {
+    action.deactivate();
+    executing = false;
+  }
+
   this->duration = duration;
   this->durationUnit = durationUnit;
 

@@ -16,7 +16,7 @@
 #include "telegram_bot.h"
 #include "credentials.h"
 #include "trh_sensor.h"
-#include "light_sensor.h"
+#include "analog_sensor.h"
 #include "aux_functions.h"
 #include "control.h"
 #include "periodic_action.h"
@@ -31,6 +31,7 @@
 #define WIFI_BAUDRATE 115200
 
 #define LIGHT_SENSOR_PIN A1
+#define MOISTURE_SENSOR_PIN A0
 
 #define LIGHT_PIN LED3
 #define WATER_PIN LED2
@@ -52,12 +53,14 @@
 #define CONTROL_CONDITION_POLL_TIME 5s
 
 #define TEMPERATURE_EMOJI "\xE2\x99\xA8"
-#define HUMIDITY_EMOJI "\xF0\x9F\x92\xA7"
+#define MOISTURE_EMOJI "\xF0\x9F\x92\xA7"
 #define LIGHT_EMOJI "\xF0\x9F\x8C\x9E"
+#define HUMIDITY_EMOJI "\xE2\x98\x81"
 
 #define CONTROL_HUMIDITY_CHAR 'h'
 #define CONTROL_TEMPERATURE_CHAR 't'
 #define CONTROL_LIGHT_CHAR 'l'
+#define CONTROL_MOISTURE_CHAR 'm'
 
 
 class eGardener : public ActivableAction {
@@ -68,7 +71,7 @@ class eGardener : public ActivableAction {
   Clock rtc;
   Memory eeprom;
   TRHSensor trhSensor;
-  LightSensor lightSensor;
+  AnalogSensor lightSensor, moistureSensor;
   TelegramBot bot;
   Control controlLight, controlWater;
   Ticker tickerCheckMessages, tickerCheckClock, tickerCheckControlCondition;
@@ -88,6 +91,7 @@ class eGardener : public ActivableAction {
   void sendTemperature(const std::string&);
   void sendHumidity(const std::string&);
   void sendLight(const std::string&);
+  void sendMoisture(const std::string&);
   void sendSenseAll(const std::string&);
   void calibrateLightSensor(const std::string&);
   void setSenseInterval(const std::string&, const std::string&);
@@ -100,6 +104,7 @@ class eGardener : public ActivableAction {
   void setControlIntervalStatus(const std::string&, const std::string&, bool);
   void setControlConditionsStatus(const std::string&, const std::string&, bool);
   void sendNextControlTime(const std::string&, const std::string&);
+  void sendControlIntervalStatus(const std::string&, const std::string&);
 
   void activate();
   void deactivate();

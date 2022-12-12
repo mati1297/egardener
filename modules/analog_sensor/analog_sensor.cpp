@@ -3,14 +3,14 @@
 
 #include <algorithm>
 #include "mbed.h"
-#include "light_sensor.h"
+#include "analog_sensor.h"
 
-LightSensor::LightSensor(PinName analog, float vref, uint8_t averagePoints):
+AnalogSensor::AnalogSensor(PinName analog, float vref, uint8_t averagePoints):
                          analog(analog, vref), max(-1), min(-1),
                           averagePoints((averagePoints > 0) ?
                                         averagePoints : 1) {}
 
-float LightSensor::sense(bool raw) {
+float AnalogSensor::sense(bool raw) {
   float rawValue = senseRaw();
 
   if (raw)
@@ -25,7 +25,7 @@ float LightSensor::sense(bool raw) {
   return (rawValue - min) / (max - min);
 }
 
-bool LightSensor::setMaxAndMin(float max, float min) {
+bool AnalogSensor::setMaxAndMin(float max, float min) {
   if (max <= min)
     return false;
   this->max = max;
@@ -34,15 +34,15 @@ bool LightSensor::setMaxAndMin(float max, float min) {
   return true;
 }
 
-float LightSensor::getMax() {
+float AnalogSensor::getMax() {
   return max;
 }
 
-float LightSensor::getMin() {
+float AnalogSensor::getMin() {
   return min;
 }
 
-float LightSensor::senseRaw() {
+float AnalogSensor::senseRaw() {
   float total = 0;
   if (averagePoints < 1)
     averagePoints = 1;
