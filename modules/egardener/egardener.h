@@ -20,6 +20,8 @@
 #include "aux_functions.h"
 #include "control.h"
 #include "periodic_action.h"
+#include "activable_action.h"
+#include "conditionable_action.h"
 
 #define I2C_PORT2_SDA_PIN PB_9
 #define I2C_PORT2_SCL_PIN PB_8
@@ -53,27 +55,13 @@
 #define HUMIDITY_EMOJI "\xF0\x9F\x92\xA7"
 #define LIGHT_EMOJI "\xF0\x9F\x8C\x9E"
 
-#define CONTROL_DELIMITER ','
-#define CONTROL_GREAT_CHAR '>'
-#define CONTROL_LESS_CHAR '<'
-
 #define CONTROL_HUMIDITY_CHAR 'h'
 #define CONTROL_TEMPERATURE_CHAR 't'
 #define CONTROL_LIGHT_CHAR 'l'
 
-#define CONTROL_MAX_NUMBER_LENGTH 3
-
 
 class eGardener : public ActivableAction {
  private:
-  enum ControlSymbol {
-    NOTHING,
-    GREAT,
-    LESS
-  };
-
-  typedef std::pair<ControlSymbol, uint8_t> controlConditionPair;
-
   std::map<std::string, std::pair<uint16_t, uint8_t>> memoryDist;
   std::string wifi_ssid, wifi_pwd;
   WiFi wifi;
@@ -84,12 +72,10 @@ class eGardener : public ActivableAction {
   TelegramBot bot;
   Control controlLight, controlWater;
   Ticker tickerCheckMessages, tickerCheckClock, tickerCheckControlCondition;
-  bool checkMessages, checkClock;
-  bool checkControlConditionFlag, controlConditionWaterActivated, controlConditionLightActivated;
+  bool checkMessages, checkClock, checkControlCondition;
   
   PeriodicAction periodicSense, periodicWater, periodicLight;
-
-  std::map<char, std::pair<ControlSymbol, uint8_t>> controlConditionsWater, controlConditionsLight;
+  ConditionableAction conditionableWater, conditionableLight;
 
   void setupMemoryDist();
   void setup();
@@ -114,12 +100,9 @@ class eGardener : public ActivableAction {
   void setControlIntervalStatus(const std::string&, const std::string&, bool);
   void setControlConditionsStatus(const std::string&, const std::string&, bool);
   void sendNextControlTime(const std::string&, const std::string&);
-  bool checkControlConditions(char);
 
   void activate();
   void deactivate();
-
-  std::map<char, std::pair<ControlSymbol, uint8_t>>parseVariableConditions(const std::string& input);
 
  public:
   eGardener();

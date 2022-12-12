@@ -18,6 +18,8 @@
 #include "light_sensor.h"
 #include "aux_functions.h"
 #include "control.h"
+#include "conditionable_action.h"
+#include "activable_action.h"
 
 // hacer que guarde un user y listo.
 // o hacer con contraseña?
@@ -35,9 +37,10 @@ eGardener::eGardener(): memoryDist(),
                   ADDRESS_SENSOR_RH_TEMP),
             lightSensor(LIGHT_SENSOR_PIN), bot(wifi, TELEGRAM_BOT_TOKEN), controlLight(LIGHT_PIN), controlWater(WATER_PIN),
             tickerCheckMessages(), tickerCheckClock(), tickerCheckControlCondition(),
-            checkMessages(false), checkClock(false), checkControlConditionFlag(false),
-            controlConditionWaterActivated(false), controlConditionLightActivated(false),
-            periodicSense(*this), periodicWater(controlWater, false, false), periodicLight(controlLight, false, false) {
+            checkMessages(false), checkClock(false), checkControlCondition(false),
+            periodicSense(*this), periodicWater(controlWater, false, false), periodicLight(controlLight, false, false),
+            conditionableWater(controlWater, std::vector<char>{CONTROL_HUMIDITY_CHAR, CONTROL_LIGHT_CHAR, CONTROL_TEMPERATURE_CHAR}),
+            conditionableLight(controlLight, std::vector<char>{CONTROL_HUMIDITY_CHAR, CONTROL_LIGHT_CHAR, CONTROL_TEMPERATURE_CHAR}) {
   setup();
 }
 
@@ -72,9 +75,9 @@ void eGardener::execute() {
           setSenseInterval(message.from_id, message.text.substr(firstSpacePos+1));
         else if (message.text == "/nextsensetime")
           sendNextSenseTime(message.from_id);
-        else if (message.text == "/activatecontrolconditions")
+        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/activatecontrolconditions")
           setControlConditionsStatus(message.from_id, message.text.substr(firstSpacePos+1), true);
-        else if (message.text == "/deactivatecontrolconditions")
+        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/deactivatecontrolconditions")
           setControlConditionsStatus(message.from_id, message.text.substr(firstSpacePos+1), false);
         else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/setcontrolconditions")
           setControlConditions(message.from_id, message.text.substr(firstSpacePos+1));
@@ -102,20 +105,13 @@ void eGardener::execute() {
       periodicLight.execute(time);
       periodicWater.execute(time);
     }
-    if (checkControlConditionFlag) {
-      if (controlConditionWaterActivated) {
-        if (checkControlConditions('w'))
-          controlWater.activate();
-        else
-          controlWater.deactivate();
-      }
-      if (controlConditionLightActivated) {
-        if (checkControlConditions('l'))
-          controlLight.activate();
-        else
-          controlLight.deactivate();
-      }
-      checkControlConditionFlag = false;
+    if (checkControlCondition) {
+      std::map<char, uint8_t> values{{CONTROL_HUMIDITY_CHAR, trhSensor.senseHumidity()},
+                                     {CONTROL_TEMPERATURE_CHAR, trhSensor.senseTemperature()},
+                                     {CONTROL_LIGHT_CHAR, lightSensor.sense() * 100}};
+      conditionableWater.execute(values);
+      conditionableLight.execute(values);
+      checkControlCondition = false;
     }
     // Por ahora, despues con timers y booleans.
   }
@@ -130,7 +126,7 @@ void eGardener::activateCheckClock() {
 }
 
 void eGardener::activateCheckControlCondition() {
-  checkControlConditionFlag = true;
+  checkControlCondition = true;
 }
 
 void eGardener::sendWelcomeMessage(const std::string& user_id) {
@@ -242,6 +238,22 @@ void eGardener::sendSenseIntervalStatus(const std::string& user_id) {
 void eGardener::sendNextSenseTime(const std::string& user_id) {
   bot.sendMessage(user_id, "Next sense at " + periodicSense.getNextTime().formatTime()
                           + " " + periodicSense.getNextTime().formatDate());
+}
+
+void eGardener::sendNextControlTime(const std::string& user_id, const std::string& body) {
+  PeriodicAction * control;
+
+  if (body[0] == 'w')
+    control = &periodicWater;
+  else if (body[0] == 'l')
+    control = &periodicLight;
+  else {
+    bot.sendMessage(user_id, "Control selected unknown");
+    return;
+  }
+
+  bot.sendMessage(user_id, "Next sense at " + control->getNextTime().formatTime()
+                          + " " + control->getNextTime().formatDate());
 }
 
 void eGardener::setSenseInterval(const std::string& user_id, const std::string& body) {
@@ -385,17 +397,18 @@ void eGardener::setupMemoryDist() {
 
 
 void eGardener::setControlConditions(const std::string& user_id, const std::string& body) {
-  auto conditions = parseVariableConditions(body.substr(1));
+  ConditionableAction * conditionable;
 
-  if (conditions.empty()) {
-    bot.sendMessage(user_id, "Wrong conditions input");
+  if (body[0] == 'w')
+    conditionable = &conditionableWater;
+  else if (body[0] == 'l')
+    conditionable = &conditionableLight;
+  else {
+    bot.sendMessage(user_id, "Control selected unknown");
     return;
   }
 
-  if (body[0] == 'w')
-    controlConditionsWater = conditions;
-  else if (body[0] == 'l')
-    controlConditionsLight = conditions;
+  conditionable->setConditions(body.substr(1));
 
   bot.sendMessage(user_id, "Control conditions for " + (body[0] + std::string(" set succesfully")));
 }
@@ -442,16 +455,20 @@ void eGardener::setControlIntervalStatus(const std::string& user_id, const std::
 }
 
 void eGardener::setControlConditionsStatus(const std::string& user_id, const std::string& body, bool activated) {
+  ConditionableAction * conditionable;
+
   if (body[0] == 'w')
-    controlConditionWaterActivated = activated;
+    conditionable = &conditionableWater;
   else if (body[0] == 'l')
-    controlConditionLightActivated = activated;
+    conditionable = &conditionableLight;
   else {
     bot.sendMessage(user_id, "Control selected unknown");
     return;
   }
+
+  conditionable->setActivatedStatus(activated);
   // TODO(matiascharrut) GUARDAR!
-  bot.sendMessage(user_id, (std::string("Control time ") + body[0]) + " " + ((activated) ? "activated" : "deactivated"));
+  bot.sendMessage(user_id, (std::string("Control conditions ") + body[0]) + " " + ((activated) ? "activated" : "deactivated"));
 }
 
 void eGardener::setControlStatus(const std::string& user_id, const std::string& body, bool activated) {
@@ -469,125 +486,6 @@ void eGardener::setControlStatus(const std::string& user_id, const std::string& 
   // TODO(matiascharrut) GUARDAR!
   bot.sendMessage(user_id, (std::string("Control ") + body[0]) + " " + ((activated) ? "activated" : "deactivated"));
 }
-
-void eGardener::sendNextControlTime(const std::string& user_id, const std::string& body) {
-  // +2 por que salteo el espacio
-  PeriodicAction * control;
-
-  if (body[0] == 'w')
-    control = &periodicWater;
-  else if (body[0] == 'l')
-    control = &periodicLight;
-  else {
-    bot.sendMessage(user_id, "Control selected unknown");
-    return;
-  }
-
-  // TODO(matiascharrut) GUARDAR!
-  Time time = control->getNextTime();
-  bot.sendMessage(user_id, "Next control time " + time.formatTime() + " " + time.formatDate());
-}
-
-bool eGardener::checkControlConditions(char variable) {
-  bool activate = true;
-  bool all_nothing = true;
-  std::map<char, controlConditionPair> conditions;
-
-  if (variable == 'w')
-    conditions = controlConditionsWater;
-  else if (variable == 'l')
-    conditions = controlConditionsLight;
-  else
-    return false;
-
-  if (conditions.empty())
-    return false;
-    
-
-  for (auto it = conditions.begin(); it != conditions.end(); it++) {
-    float variable;
-    printf("%c: %d, %u\n", it->first, it->second.first, it->second.second);
-    switch (it->first) {
-      case 'l':
-        // validar si esta calibrado
-        variable = lightSensor.sense() * 100;
-        printf("variable chequeada = %f", variable);
-        break;
-      case 't':
-        variable = trhSensor.senseTemperature();
-        break;
-      case 'h':
-        variable = trhSensor.senseHumidity();
-        break;
-    }
-    if (it->second.first == ControlSymbol::LESS) {
-      activate = activate && variable <= it->second.second;
-      all_nothing = false;
-    }
-    else if (it->second.first == ControlSymbol::GREAT) {
-      activate = activate && variable >= it->second.second;
-      all_nothing = false;
-    }
-  }
-
-  return activate && !all_nothing; 
-}
-
-std::map<char, eGardener::controlConditionPair>eGardener::parseVariableConditions(const std::string& input) {
-  char parameter = 0;
-  ControlSymbol symbol = ControlSymbol::NOTHING;
-  std::string valueString;
-  std::map<char, controlConditionPair> result;
-
-  for (auto c : input + ',') {
-    if (c == ' ')
-      continue;
-    if (!parameter) {
-      if (result.find(parameter) != result.end())
-        return std::map<char, controlConditionPair>();
-      if (c == CONTROL_TEMPERATURE_CHAR || c == CONTROL_LIGHT_CHAR || c == CONTROL_HUMIDITY_CHAR) {
-        parameter = c;
-        continue;
-      }
-    }
-    if (symbol == ControlSymbol::NOTHING) {
-      switch (c) {
-        case CONTROL_LESS_CHAR:
-          symbol = ControlSymbol::LESS;
-          break;
-        case CONTROL_GREAT_CHAR:
-          symbol = ControlSymbol::GREAT;
-          break;
-        default:
-          return std::map<char, controlConditionPair>();
-      }
-      continue;
-    }
-    if (c == ',') {
-      uint8_t value;
-      char * endptr;
-      if (valueString.length() > CONTROL_MAX_NUMBER_LENGTH || valueString.length() < 1)
-        return std::map<char, controlConditionPair>();
-      uint16_t valueLong = strtoul(valueString.c_str(), &endptr, 10);
-      // aclarar que es con punto.
-      if (*endptr || *endptr == '.' || valueLong > 255)
-        return std::map<char, controlConditionPair>();
-      value = valueLong;
-      result.insert(std::pair<char, controlConditionPair>(parameter, controlConditionPair(symbol, value)));
-      valueString.erase();
-      parameter = 0;
-      symbol = ControlSymbol::NOTHING;
-      continue;
-    }
-    if (isdigit(c) || c == '.') {
-      valueString += c;
-      continue;
-    }
-    return std::map<char, controlConditionPair>();
-  }
-  return result;
-}
-
 
 void eGardener::activate() {
   sendSenseAll(USER);

@@ -3,17 +3,12 @@
 
 #include "mbed.h"
 #include "clock.h"
+#include "activable_action.h"
 
 #define DEFAULT_INTERVAL 30
 #define DEFAULT_INTERVAL_UNIT 'd'
 #define DEFAULT_DURATION 10
 #define DEFAULT_DURATION_UNIT 's'
-
-class ActivableAction {
-  public:
-    virtual void activate();
-    virtual void deactivate();
-};
 
 class PeriodicAction {
  private:

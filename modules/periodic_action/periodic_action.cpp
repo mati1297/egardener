@@ -1,4 +1,5 @@
 #include "mbed.h"
+#include "activable_action.h"
 #include "clock.h"
 #include "periodic_action.h"
 
@@ -19,15 +20,11 @@ void PeriodicAction::execute(const Time& now) {
   if (!activated || now < targetTime)
     return;
 
-  printf("Llegue aca 0\n");
-
   if (!executing) {
     action.activate();
-    printf("Llegue aca 1\n");
     if (instant)
       calculateAndSetNextTargetTime(now);
     else {
-      printf("Llegué aca 2\n");
       calculateAndSetNextTargetTime(now, false);
       executing = true;
     }
