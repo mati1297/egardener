@@ -62,6 +62,8 @@
 #define CONTROL_LIGHT_CHAR 'l'
 #define CONTROL_MOISTURE_CHAR 'm'
 
+#define RESET_WIFI_PIN BUTTON1
+
 
 class eGardener : public ActivableAction {
  private:
@@ -76,6 +78,8 @@ class eGardener : public ActivableAction {
   Control controlLight, controlWater;
   Ticker tickerCheckMessages, tickerCheckClock, tickerCheckControlCondition;
   bool checkMessages, checkClock, checkControlCondition;
+
+  bool controlWaterManually, controlLightManually;
   
   PeriodicAction periodicSense, periodicWater, periodicLight;
   ConditionableAction conditionableWater, conditionableLight;
@@ -105,6 +109,8 @@ class eGardener : public ActivableAction {
   void setControlConditionsStatus(const std::string&, const std::string&, bool);
   void sendNextControlTime(const std::string&, const std::string&);
   void sendControlIntervalStatus(const std::string&, const std::string&);
+  void sendControlStatus(const std::string&, const std::string&);
+  void sendControlConditionStatus(const std::string&, const std::string&);
 
   void activate();
   void deactivate();

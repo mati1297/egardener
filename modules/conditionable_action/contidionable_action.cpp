@@ -124,3 +124,7 @@ void ConditionableAction::setActivatedStatus(bool activated) {
 bool ConditionableAction::isActivated() {
   return activated;
 }
+
+const std::map<char, ConditionableAction::ConditionPair>& ConditionableAction::getConditions() {
+  return conditions;
+}

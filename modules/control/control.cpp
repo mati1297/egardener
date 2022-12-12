@@ -15,3 +15,7 @@ void Control::deactivate() {
   if (--counter == 0)
     out = 0;
 }
+
+bool Control::isActivated() {
+  return out;
+}

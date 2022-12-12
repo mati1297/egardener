@@ -38,6 +38,7 @@ eGardener::eGardener(): memoryDist(),
             lightSensor(LIGHT_SENSOR_PIN), moistureSensor(MOISTURE_SENSOR_PIN), bot(wifi, TELEGRAM_BOT_TOKEN), controlLight(LIGHT_PIN), controlWater(WATER_PIN),
             tickerCheckMessages(), tickerCheckClock(), tickerCheckControlCondition(),
             checkMessages(false), checkClock(false), checkControlCondition(false),
+            controlWaterManually(false), controlLightManually(false),
             periodicSense(*this), periodicWater(controlWater, false, false), periodicLight(controlLight, false, false),
             conditionableWater(controlWater, std::vector<char>{CONTROL_HUMIDITY_CHAR, CONTROL_LIGHT_CHAR, CONTROL_TEMPERATURE_CHAR}),
             conditionableLight(controlLight, std::vector<char>{CONTROL_HUMIDITY_CHAR, CONTROL_LIGHT_CHAR, CONTROL_TEMPERATURE_CHAR}) {
@@ -75,11 +76,11 @@ void eGardener::execute() {
           setSenseInterval(message.from_id, message.text.substr(firstSpacePos+1));
         else if (message.text == "/nextsensetime")
           sendNextSenseTime(message.from_id);
-        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/activatecontrolconditions")
+        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/activatecontrolcondition")
           setControlConditionsStatus(message.from_id, message.text.substr(firstSpacePos+1), true);
-        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/deactivatecontrolconditions")
+        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/deactivatecontrolcondition")
           setControlConditionsStatus(message.from_id, message.text.substr(firstSpacePos+1), false);
-        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/setcontrolconditions")
+        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/setcontrolcondition")
           setControlConditions(message.from_id, message.text.substr(firstSpacePos+1));
         else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/setcontrolinterval")
           setControlInterval(message.from_id, message.text.substr(firstSpacePos+1));
@@ -89,13 +90,16 @@ void eGardener::execute() {
           setControlIntervalStatus(message.from_id, message.text.substr(firstSpacePos+1), false);
         else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/controlintervalstatus")
           sendControlIntervalStatus(message.from_id, message.text.substr(firstSpacePos+1));
-        // TODO(matiascharrut) show control conditions an interval with status. (Y estatus de si esta prendido).
         else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/nextcontroltime")
           sendNextControlTime(message.from_id, message.text.substr(firstSpacePos+1));
         else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/activatecontrol")
           setControlStatus(message.from_id, message.text.substr(firstSpacePos+1), true);
         else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/deactivatecontrol")
           setControlStatus(message.from_id, message.text.substr(firstSpacePos+1), false);
+        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/controlstatus")
+          sendControlStatus(message.from_id, message.text.substr(firstSpacePos+1));
+        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/controlconditionstatus")
+          sendControlConditionStatus(message.from_id, message.text.substr(firstSpacePos+1));
         else
           bot.sendMessage(message.from_id, "Command unknown");
       }
@@ -292,9 +296,59 @@ void eGardener::sendControlIntervalStatus(const std::string& user_id, const std:
   }
 
   std::string state = control->isActivated() ? "activated" : "deactivated";
-  bot.sendMessage(user_id, std::string("Control interval is ") + body[0] + " " + state +
+  bot.sendMessage(user_id, std::string("Control interval ") + body[0] + " is " + state +
                   "\nControl interval is " + to_string(control->getInterval()) +
                   control->getIntervalUnit() + " with duration " + to_string(control->getDuration()) + control->getDurationUnit());
+}
+
+void eGardener::sendControlStatus(const std::string& user_id, const std::string& body) {
+  Control * control;
+  bool manually;
+
+  if (body[0] == 'w') {
+    control = &controlWater;
+    manually = controlWaterManually;
+  }
+  else if (body[0] == 'l') {
+    control = &controlLight;
+    manually = controlLightManually;
+  }
+  else {
+    bot.sendMessage(user_id, "Control selected unknown");
+    return;
+  }
+
+  std::string state = control->isActivated() ? "activated" : "deactivated";
+  bot.sendMessage(user_id, std::string("Control ") + body[0] + " is " + state
+                  + ((manually) ? " (manually)" : ""));
+}
+
+void eGardener::sendControlConditionStatus(const std::string& user_id, const std::string& body) {
+  ConditionableAction * control;
+
+  if (body[0] == 'w') {
+    control = &conditionableWater;
+  }
+  else if (body[0] == 'l') {
+    control = &conditionableLight;
+
+  }
+  else {
+    bot.sendMessage(user_id, "Control selected unknown");
+    return;
+  }
+
+  std::string conditionsStr;
+  auto conditions = control->getConditions();
+
+  for (auto it = conditions.begin(); it != conditions.end(); it++) {
+    conditionsStr += it->first + std::string(" ") + ((it->second.first == ConditionableAction::Symbol::GREAT) ? GREAT_CHAR : LESS_CHAR);
+    conditionsStr += " " + to_string(it->second.second) + "\n";
+  }
+
+  std::string state = control->isActivated() ? "activated" : "deactivated";
+  bot.sendMessage(user_id, std::string("Control condition ") + body[0] + " is " + state +
+                  "\nConditions are\n" + conditionsStr);
 }
 
 void eGardener::setSenseInterval(const std::string& user_id, const std::string& body) {
@@ -383,6 +437,49 @@ void eGardener::setup() {
     periodicLight.setDuration(duration, durationUnit);
   }
 
+  address = memoryDist.find("ccw")->second;
+
+  eeprom.read(address.first, there);
+  if (there) {
+    std::map<char, ConditionableAction::ConditionPair> conditions;
+    bool activated;
+    uint8_t amount;
+    uint16_t pos_accum = 0;
+    eeprom.read(address.first + sizeof(bool), activated);
+    eeprom.read(address.first + sizeof(bool) * 2, amount);
+    for (uint8_t i = 0; i < amount; i++) {
+      char variable;
+      uint8_t symbol, value;
+      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + pos_accum, variable);
+      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + pos_accum, symbol);
+      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + pos_accum, value);
+      pos_accum += sizeof(char) + sizeof(uint8_t) * 2;
+      conditions.insert(std::make_pair(variable, ConditionableAction::ConditionPair((ConditionableAction::Symbol) symbol, value)));
+    }
+    conditionableWater.setConditions(conditions);
+  }
+
+  address = memoryDist.find("ccl")->second;
+  eeprom.read(address.first, there);
+  if (there) {
+    std::map<char, ConditionableAction::ConditionPair> conditions;
+    bool activated;
+    uint8_t amount;
+    uint16_t pos_accum = 0;
+    eeprom.read(address.first + sizeof(bool), activated);
+    eeprom.read(address.first + sizeof(bool) * 2, amount);
+    for (uint8_t i = 0; i < amount; i++) {
+      char variable;
+      uint8_t symbol, value;
+      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + pos_accum, variable);
+      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + pos_accum, symbol);
+      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + pos_accum, value);
+      pos_accum += sizeof(char) + sizeof(uint8_t) * 2;
+      conditions.insert(std::make_pair(variable, ConditionableAction::ConditionPair((ConditionableAction::Symbol) symbol, value)));
+    }
+    conditionableLight.setConditions(conditions);
+  }
+
   printf("Conectando a Wi-Fi...\n");
 
   uint8_t wifiTryCounter = 0;
@@ -448,18 +545,27 @@ void eGardener::setupMemoryDist() {
 
   memoryDist.insert(std::pair<std::string, std::pair<uint16_t, uint8_t>>
                     ("st", std::pair<uint16_t, uint8_t>(position,
-                    sizeof(bool) * 2+ sizeof(uint8_t) + sizeof(char))));
-  position = sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char);
+                    sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char))));
+  position += sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char);
 
   memoryDist.insert(std::pair<std::string, std::pair<uint16_t, uint8_t>>
                     ("ctw", std::pair<uint16_t, uint8_t>(position,
-                    sizeof(bool) * 2+ sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + sizeof(char))));
-  position = sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + sizeof(char);
+                    sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + sizeof(char))));
+  position += sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + sizeof(char);
 
   memoryDist.insert(std::pair<std::string, std::pair<uint16_t, uint8_t>>
                     ("ctl", std::pair<uint16_t, uint8_t>(position,
-                    sizeof(bool) * 2+ sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + sizeof(char))));
-  position = sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + sizeof(char);
+                    sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + sizeof(char))));
+  position += sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + sizeof(char);
+
+  memoryDist.insert(std::make_pair("ccw", std::make_pair(position,
+                    sizeof(bool) * 2 + sizeof(uint8_t) + (sizeof(char) + sizeof(uint8_t) * 2) * 4)));
+  position += sizeof(bool) * 2 + sizeof(uint8_t) + (sizeof(char) + sizeof(uint8_t) * 2) * 4;
+
+  memoryDist.insert(std::make_pair("ccl", std::make_pair(position,
+                    sizeof(bool) * 2 + sizeof(uint8_t) + (sizeof(char) + sizeof(uint8_t) * 2) * 4)));
+  position += sizeof(bool) * 2 + sizeof(uint8_t) + (sizeof(char) + sizeof(uint8_t) * 2) * 4;
+
 }
 
 
@@ -475,7 +581,28 @@ void eGardener::setControlConditions(const std::string& user_id, const std::stri
     return;
   }
 
-  conditionable->setConditions(body.substr(1));
+  if (!conditionable->setConditions(body.substr(1))) {
+    bot.sendMessage(user_id, "Conditions are not correct");
+    return;
+  }
+    
+  auto address = memoryDist.find(std::string("cc") + body[0])->second;
+  eeprom.write(address.first, true);
+
+  auto conditions = conditionable->getConditions();
+  uint8_t counter = 0;
+  uint16_t pos_accum = 0;
+
+  for (auto it = conditions.begin(); it != conditions.end(); it++) {
+    // revisar en diccionario
+    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + pos_accum, it->first);
+    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + pos_accum, it->second.first);
+    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + pos_accum, it->second.second);
+    pos_accum += sizeof(char) + sizeof(uint8_t) * 2;
+    counter++;
+  }
+
+  eeprom.write(address.first + sizeof(bool) * 2, counter);
 
   bot.sendMessage(user_id, "Control conditions for " + (body[0] + std::string(" set succesfully")));
 }
@@ -524,7 +651,6 @@ void eGardener::setControlIntervalStatus(const std::string& user_id, const std::
   auto address = memoryDist.find(std::string("ct") + body[0])->second;
   eeprom.write(address.first, true);
   eeprom.write(address.first + sizeof(bool), activated);
-  // TODO(matiascharrut) GUARDAR!
   bot.sendMessage(user_id, (std::string("Control interval ") + body[0]) + " " + ((activated) ? "activated" : "deactivated"));
 }
 
@@ -541,23 +667,26 @@ void eGardener::setControlConditionsStatus(const std::string& user_id, const std
   }
 
   conditionable->setActivatedStatus(activated);
-  // TODO(matiascharrut) GUARDAR!
+  auto address = memoryDist.find(std::string("cc") + body[0])->second;
+  eeprom.write(address.first, true);
+  eeprom.write(address.first + sizeof(bool), activated);
   bot.sendMessage(user_id, (std::string("Control conditions ") + body[0]) + " " + ((activated) ? "activated" : "deactivated"));
 }
 
 void eGardener::setControlStatus(const std::string& user_id, const std::string& body, bool activated) {
-  Control * control;
-
-  if (body[0] == 'w')
-    control = &controlWater;
-  else if (body[0] == 'l')
-    control = &controlLight;
+  if (body[0] == 'w') {
+    (activated) ? controlWater.activate() : controlWater.deactivate();
+    controlWaterManually = activated;
+  }
+  else if (body[0] == 'l') {
+    (activated) ? controlLight.activate() : controlLight.deactivate();
+    controlLightManually = activated;
+  }
   else {
     bot.sendMessage(user_id, "Control selected unknown");
     return;
   }
-  (activated) ? control->activate() : control->deactivate();
-  // TODO(matiascharrut) GUARDAR!
+
   bot.sendMessage(user_id, (std::string("Control ") + body[0]) + " " + ((activated) ? "activated" : "deactivated"));
 }
 

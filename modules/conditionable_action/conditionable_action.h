@@ -45,6 +45,8 @@ class ConditionableAction {
   bool isActivated();
   bool setConditions(const std::map<char, ConditionPair>&);
   bool setConditions(const std::string&);
+
+  const std::map<char, ConditionPair>& getConditions();
 };
 
 

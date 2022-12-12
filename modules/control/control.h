@@ -19,6 +19,8 @@ class Control : public ActivableAction {
 
   void activate();
   void deactivate();
+
+  bool isActivated();
 };
 
 #endif  // MODULES_CONTROL_CONTROL_H_
