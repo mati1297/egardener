@@ -6,25 +6,19 @@
 
 #include <map>
 #include "mbed.h"
+#include "periodic_action.h"
 
-#define LIGHT_CONTROL_DEFAULT_PIN LED1
-#define WATER_CONTROL_DEFAULT_PIN LED2
-
-class Control {
+class Control : public ActivableAction {
  private:
-  DigitalOut light, water;
+  DigitalOut out;
 
-  bool activatedByConditions;
-  bool deactivatedByConditions;
-
+  uint8_t counter;
 
  public:
-  Control(PinName = LIGHT_CONTROL_DEFAULT_PIN, PinName = WATER_CONTROL_DEFAULT_PIN);
+  Control(PinName);
 
-  void activateLight();
-  void deactivateLight();
-  void activateWater();
-  void deactivateWater();
+  void activate();
+  void deactivate();
 };
 
 #endif  // MODULES_CONTROL_CONTROL_H_

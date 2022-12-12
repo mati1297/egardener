@@ -19,6 +19,7 @@
 #include "light_sensor.h"
 #include "aux_functions.h"
 #include "control.h"
+#include "periodic_action.h"
 
 #define I2C_PORT2_SDA_PIN PB_9
 #define I2C_PORT2_SCL_PIN PB_8
@@ -28,6 +29,9 @@
 #define WIFI_BAUDRATE 115200
 
 #define LIGHT_SENSOR_PIN A1
+
+#define LIGHT_PIN LED3
+#define WATER_PIN LED2
 
 #define ADDRESS_RTC 0x68
 #define ADDRESS_EEPROM 0x50
@@ -59,7 +63,8 @@
 
 #define CONTROL_MAX_NUMBER_LENGTH 3
 
-class eGardener {
+
+class eGardener : public ActivableAction {
  private:
   enum ControlSymbol {
     NOTHING,
@@ -77,14 +82,12 @@ class eGardener {
   TRHSensor trhSensor;
   LightSensor lightSensor;
   TelegramBot bot;
-  Control control;
+  Control controlLight, controlWater;
   Ticker tickerCheckMessages, tickerCheckClock, tickerCheckControlCondition;
-  bool checkMessages, checkClock, senseIntervalActivated;
-  bool checkControlConditionFlag, controlConditionActivated;
+  bool checkMessages, checkClock;
+  bool checkControlConditionFlag, controlConditionWaterActivated, controlConditionLightActivated;
   
-  uint8_t senseInterval;
-  char senseIntervalUnit;
-  Time senseTargetTime;
+  PeriodicAction periodicSense, periodicWater, periodicLight;
 
   std::map<char, std::pair<ControlSymbol, uint8_t>> controlConditionsWater, controlConditionsLight;
 
@@ -101,16 +104,22 @@ class eGardener {
   void sendLight(const std::string&);
   void sendSenseAll(const std::string&);
   void calibrateLightSensor(const std::string&);
-  void setSenseInterval(const TelegramMessage&);
+  void setSenseInterval(const std::string&, const std::string&);
   void setSenseIntervalActivated(const std::string&, bool activated);
   void sendSenseIntervalStatus(const std::string&);
   void sendNextSenseTime(const std::string&);
-  void setControlConditions(const TelegramMessage&);
+  void setControlConditions(const std::string&, const std::string&);
+  void setControlInterval(const std::string&, const std::string&);
+  void setControlStatus(const std::string&, const std::string&, bool);
+  void setControlIntervalStatus(const std::string&, const std::string&, bool);
+  void setControlConditionsStatus(const std::string&, const std::string&, bool);
+  void sendNextControlTime(const std::string&, const std::string&);
   bool checkControlConditions(char);
 
-  std::map<char, std::pair<ControlSymbol, uint8_t>>parseVariableConditions(const std::string& input);
+  void activate();
+  void deactivate();
 
-  Time calculateTargetTime(uint8_t interval, char unit);
+  std::map<char, std::pair<ControlSymbol, uint8_t>>parseVariableConditions(const std::string& input);
 
  public:
   eGardener();

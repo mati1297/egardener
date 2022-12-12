@@ -4,22 +4,14 @@
 #include "mbed.h"
 #include "control.h"
 
-Control::Control(PinName light, PinName water): light(light), water(water) {}
+Control::Control(PinName out): out(out) {}
 
-
-
-void Control::activateLight() {
-  light = 1;
+void Control::activate() {
+  counter++;
+  out = 1;
 }
 
-void Control::deactivateLight() {
-  light = 0;
-}
-
-void Control::activateWater() {
-  water = 1;
-}
-
-void Control::deactivateWater() {
-  water = 0;
+void Control::deactivate() {
+  if (--counter == 0)
+    out = 0;
 }
