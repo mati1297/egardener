@@ -20,6 +20,7 @@
 #include "control.h"
 #include "conditionable_action.h"
 #include "activable_action.h"
+#include "user_register.h"
 
 // hacer que guarde un user y listo.
 // o hacer con contraseña?
@@ -41,7 +42,8 @@ eGardener::eGardener(): memoryDist(),
             controlWaterManually(false), controlLightManually(false),
             periodicSense(*this), periodicWater(controlWater, false, false), periodicLight(controlLight, false, false),
             conditionableWater(controlWater, std::vector<char>{CONTROL_HUMIDITY_CHAR, CONTROL_LIGHT_CHAR, CONTROL_TEMPERATURE_CHAR}),
-            conditionableLight(controlLight, std::vector<char>{CONTROL_HUMIDITY_CHAR, CONTROL_LIGHT_CHAR, CONTROL_TEMPERATURE_CHAR}) {
+            conditionableLight(controlLight, std::vector<char>{CONTROL_HUMIDITY_CHAR, CONTROL_LIGHT_CHAR, CONTROL_TEMPERATURE_CHAR}),
+            userRegister() {
   setup();
 }
 
@@ -56,8 +58,22 @@ void eGardener::execute() {
         size_t firstSpacePos = message.text.find_first_of(' ');
         std::string cmd = message.text.substr(0, firstSpacePos);
         std::string body = message.text.substr(firstSpacePos + 1);
-        if (message.text == "/start")
+        if (message.text == "/start") {
           sendWelcomeMessage(message.from_id);
+          continue;
+        }
+        if (cmd == "/addme") {
+          addUser(message.from_id, body);
+          continue;
+        }
+        if (!userRegister.isUserRegistered(message.from_id)) {
+          bot.sendMessage(message.from_id, "You need to be registered. Use /addme followed by password to register.");
+          continue;
+        }
+        if (firstSpacePos != std::string::npos && cmd == "/setpwd")
+          setPwd(message.from_id, body);
+        else if (message.text == "/removeme")
+          removeUser(message.from_id);
         else if (message.text == "/temperature")
           sendTemperature(message.from_id);
         else if (message.text == "/humidity")
@@ -155,7 +171,80 @@ void eGardener::activateResetWiFi() {
 }
 
 void eGardener::sendWelcomeMessage(const std::string& user_id) {
-  bot.sendMessage(user_id, "Welcome to eGardener!");
+  if (userRegister.isUserRegistered(user_id)) 
+    bot.sendMessage(user_id, "Welcome to eGardener!");
+  else
+    bot.sendMessage(user_id, "Welcome to eGardener, you are not registered. Register with /addme followed by the password");
+
+  //HELP
+}
+
+void eGardener::setPwd(const std::string& user_id, const std::string& body) {
+  size_t firstSpacePos = body.find_first_of(' ');
+
+  std::string newPwd = body.substr(0, firstSpacePos);
+  std::string oldPwd = body.substr(firstSpacePos+1);
+
+  if (newPwd.find_first_of(' ') != std::string::npos) {
+    bot.sendMessage(user_id, "Password must not have spaces");
+    return;
+  }
+  else if (userRegister.setPwd(oldPwd, newPwd))
+    bot.sendMessage(user_id, "Password set succesfully");
+  else {
+    bot.sendMessage(user_id, "Old password is incorrect or new password is longer than " + to_string(MAX_PWD_USER_LENGTH));
+    return;
+  }
+
+  auto address = memoryDist.find("ur")->second;
+  eeprom.write(address.first, true);
+  eeprom.write(address.first + sizeof(bool), newPwd);
+
+  eeprom.read(address.first + sizeof(bool), newPwd);
+}
+
+void eGardener::addUser(const std::string& user_id, const std::string& body) {
+  uint8_t result = userRegister.addUser(user_id, body);
+
+  if (result == 1) {
+    bot.sendMessage(user_id, "You were added already");
+  }
+  if (result == 2) {
+    bot.sendMessage(user_id, "Wrong password");
+    return;
+  }
+  else if (result == 3) {
+    bot.sendMessage(user_id, "Cannot save more users");
+    return;
+  }
+
+  bot.sendMessage(user_id, "You were succesfully added");
+
+  // save.
+  auto users = userRegister.getUsers();
+
+  auto address = memoryDist.find("ur")->second;
+  eeprom.write(address.first, true);
+  eeprom.write(address.first + sizeof(bool) + MAX_PWD_USER_LENGTH + 1, users.size());
+  for (int i = 0; i < users.size(); i++) {
+    eeprom.write(address.first + sizeof(bool) + MAX_PWD_USER_LENGTH + 1 + sizeof(uint8_t) + sizeof(uint32_t) * i, users[i]);
+  }
+}
+
+void eGardener::removeUser(const std::string& user_id) {
+  if (!userRegister.removeUser(user_id))
+    return;
+
+  bot.sendMessage(user_id, "You were succesfully removed");
+  
+  auto users = userRegister.getUsers();
+
+  auto address = memoryDist.find("ur")->second;
+  eeprom.write(address.first, true);
+  eeprom.write(address.first + sizeof(bool) + MAX_PWD_USER_LENGTH + 1, users.size());
+  for (int i = 0; i < users.size(); i++) {
+    eeprom.write(address.first + sizeof(bool) + MAX_PWD_USER_LENGTH + 1 + sizeof(uint8_t) + sizeof(uint32_t) * i, users[i]);
+  }
 }
 
 void eGardener::sendTemperature(const std::string& user_id) {
@@ -234,7 +323,7 @@ void eGardener::calibrateLightSensor(const std::string& user_id) {
   bot.sendMessage(user_id, R"(Put direct light on the sensor )" + 
                            std::string(R"(with your phone flash and type ok)")
                            + R"( (any other text to cancel).)");
-  if (getTelegramResponseForInteraction(bot) != "ok") {
+  if (getTelegramResponseForInteraction() != "ok") {
     bot.sendMessage(user_id, "Operation cancelled");
     return;
   }
@@ -242,7 +331,7 @@ void eGardener::calibrateLightSensor(const std::string& user_id) {
 
   bot.sendMessage(user_id, std::string(R"(Now put your finger on the sensor)")
                            + R"(and type ok (any other text to cancel).)");
-  if (getTelegramResponseForInteraction(bot) != "ok") {
+  if (getTelegramResponseForInteraction() != "ok") {
               bot.sendMessage(user_id, "Operation cancelled");
     return;
   }
@@ -497,6 +586,23 @@ void eGardener::setup() {
     conditionableLight.setConditions(conditions);
   }
 
+  address = memoryDist.find("ur")->second;
+  eeprom.read(address.first, there);
+
+  if (there) {
+    std::string pwd;
+    uint8_t usersSize;
+    eeprom.read(address.first + sizeof(bool), pwd);
+    printf("Password: %s\n", pwd.c_str());
+    userRegister.setPwd("", pwd);
+    eeprom.read(address.first + sizeof(bool) + MAX_PWD_USER_LENGTH + 1, usersSize);
+    for (int i = 0; i < usersSize; i++) {
+      uint32_t user;
+      eeprom.read(address.first + sizeof(bool) + MAX_PWD_USER_LENGTH + 1 + sizeof(uint8_t) + sizeof(uint32_t) * i, user);
+      userRegister.addUser(user, pwd);
+    }
+  }
+
   printf("Connecting to Wi-Fi...\n");
 
   connectToWiFi();
@@ -512,13 +618,14 @@ void eGardener::setup() {
   interruptResetWiFi.rise(callback(this, &eGardener::activateResetWiFi));
   
 
-  printf("Listo!\n");
+  printf("Ready!\n");
 }
 
 // devuelve todo en minusculas.
-std::string eGardener::getTelegramResponseForInteraction(TelegramBot& bot) {
+std::string eGardener::getTelegramResponseForInteraction() {
   std::vector<TelegramMessage> messages;
-  while (messages.empty()) {
+  uint8_t counter = 0;
+  while (messages.empty() && counter < TELEGRAM_RESPONSE_WAIT_TIMEOUT) {
     messages = bot.getMessages(1);
     ThisThread::sleep_for(TELEGRAM_POLL_TIME_WAITING);
   }
@@ -590,6 +697,10 @@ void eGardener::setupMemoryDist() {
                     sizeof(bool) * 2 + sizeof(uint8_t) + (sizeof(char) + sizeof(uint8_t) * 2) * 4)));
   position += sizeof(bool) * 2 + sizeof(uint8_t) + (sizeof(char) + sizeof(uint8_t) * 2) * 4;
 
+  memoryDist.insert(std::make_pair("ur", std::make_pair(position + 10, sizeof(bool) + MAX_PWD_USER_LENGTH + 1
+                                                       + sizeof(uint8_t) + sizeof(uint32_t) * MAX_NUMBER_USERS)));
+  position += 10 + sizeof(bool) + MAX_PWD_USER_LENGTH + 1 + sizeof(uint8_t) + sizeof(uint32_t) * MAX_NUMBER_USERS;
+                                                    
 }
 
 
@@ -716,7 +827,7 @@ void eGardener::setControlStatus(const std::string& user_id, const std::string& 
 
 void eGardener::resetWiFi() {
   wifi.setAsAP();
-  printf("Seteado como AP\n");
+  printf("Set as AP\n");
 }
 
 bool eGardener::checkAndSaveNewWiFi() {
@@ -742,7 +853,12 @@ bool eGardener::checkAndSaveNewWiFi() {
 }
 
 void eGardener::activate() {
-  sendSenseAll(USER);
+  std::vector<std::string> users;
+  userRegister.getUsers(users);
+  for (auto user : users) {
+    printf("%s\n", user.c_str());
+    sendTemperature(user);
+  }
 }
 
 void eGardener::deactivate() {

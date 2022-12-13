@@ -22,6 +22,7 @@
 #include "periodic_action.h"
 #include "activable_action.h"
 #include "conditionable_action.h"
+#include "user_register.h"
 
 #define I2C_PORT2_SDA_PIN PB_9
 #define I2C_PORT2_SCL_PIN PB_8
@@ -64,6 +65,8 @@
 
 #define RESET_WIFI_PIN BUTTON1
 
+#define TELEGRAM_RESPONSE_WAIT_TIMEOUT 50
+
 
 class eGardener : public ActivableAction {
  private:
@@ -85,9 +88,11 @@ class eGardener : public ActivableAction {
   PeriodicAction periodicSense, periodicWater, periodicLight;
   ConditionableAction conditionableWater, conditionableLight;
 
+  UserRegister userRegister;
+
   void setupMemoryDist();
   void setup();
-  std::string getTelegramResponseForInteraction(TelegramBot &);
+  std::string getTelegramResponseForInteraction();
   void activateCheckMessages();
   void activateCheckClock();
   void activateCheckControlCondition();
@@ -96,12 +101,16 @@ class eGardener : public ActivableAction {
   void connectToWiFi();
 
   void sendWelcomeMessage(const std::string&);
+  void addUser(const std::string&, const std::string&);
+  void setPwd(const std::string&, const std::string&);
+  void removeUser(const std::string&);
   void sendTemperature(const std::string&);
   void sendHumidity(const std::string&);
   void sendLight(const std::string&);
   void sendMoisture(const std::string&);
   void sendSenseAll(const std::string&);
   void calibrateLightSensor(const std::string&);
+  void calibrateMoistureSensor(const std::string&);
   void setSenseInterval(const std::string&, const std::string&);
   void setSenseIntervalActivated(const std::string&, bool activated);
   void sendSenseIntervalStatus(const std::string&);

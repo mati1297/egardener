@@ -177,6 +177,25 @@ bool Memory::read(uint16_t address, uint8_t &number) {
   return true;
 }
 
+bool Memory::write(uint16_t address, uint32_t number) {
+  std::vector<uint8_t> vector(sizeof(uint32_t));
+
+  memcpy(&vector[0], reinterpret_cast<uint8_t *>(&number), sizeof(uint32_t));
+
+  return write(address, vector) == sizeof(uint32_t);
+}
+
+bool Memory::read(uint16_t address, uint32_t &number) {
+  std::vector<uint8_t> vector(sizeof(uint32_t));
+
+  if (read(address, vector) != sizeof(uint32_t))
+    return false;
+
+  memcpy(&number, &vector[0], sizeof(uint32_t));
+
+  return true;
+}
+
 bool Memory::write(uint16_t address, char character) {
   std::vector<uint8_t> vector(sizeof(char));
 
@@ -201,7 +220,7 @@ bool Memory::write(uint16_t address, const std::string &string) {
   std::vector<uint8_t> vector(length + 1);
   vector[length] = 0;
 
-  memcpy(&vector[0], string.c_str(), length + 1);
+  memcpy(&vector[0], string.c_str(), length);
 
   return write(address, vector) == length + 1;
 }
