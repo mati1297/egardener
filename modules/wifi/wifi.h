@@ -19,7 +19,8 @@ enum WiFiStatus {
   WL_CONNECT_FAILED = 4,
   WL_CONNECTION_LOST = 5,
   WL_DISCONNECTED = 6,
-  WL_FAILED_COMM = 7
+  WL_FAILED_COMM = 7,
+  WL_AS_AP = 10
 };
 
 class WiFi {
@@ -31,6 +32,11 @@ class WiFi {
   std::string readToString();
   std::string readNBytes(size_t size);
 
+  bool asAP;
+  
+
+  void restart();
+
  public:
   WiFi(PinName, PinName, int);
   std::string connect(const std::string &, const std::string &);
@@ -38,6 +44,10 @@ class WiFi {
   std::string disconnect();
   std::string post(const std::string &, const std::string&);
   std::string get(const std::string &);
+  void setAsAP();
+  void getSsidAndPwd(std::string&, std::string&);
+
+
 };
 
 #endif  // MODULES_WIFI_WIFI_H_

@@ -36,8 +36,8 @@ eGardener::eGardener(): memoryDist(),
             trhSensor(I2C_PORT2_SDA_PIN, I2C_PORT2_SCL_PIN,
                   ADDRESS_SENSOR_RH_TEMP),
             lightSensor(LIGHT_SENSOR_PIN), moistureSensor(MOISTURE_SENSOR_PIN), bot(wifi, TELEGRAM_BOT_TOKEN), controlLight(LIGHT_PIN), controlWater(WATER_PIN),
-            tickerCheckMessages(), tickerCheckClock(), tickerCheckControlCondition(),
-            checkMessages(false), checkClock(false), checkControlCondition(false),
+            tickerCheckMessages(), tickerCheckClock(), tickerCheckControlCondition(), interruptResetWiFi(RESET_WIFI_PIN),
+            checkMessages(false), checkClock(false), checkControlCondition(false), checkResetWiFi(false), checkWiFiConnected(false),
             controlWaterManually(false), controlLightManually(false),
             periodicSense(*this), periodicWater(controlWater, false, false), periodicLight(controlLight, false, false),
             conditionableWater(controlWater, std::vector<char>{CONTROL_HUMIDITY_CHAR, CONTROL_LIGHT_CHAR, CONTROL_TEMPERATURE_CHAR}),
@@ -52,7 +52,7 @@ void eGardener::execute() {
       std::vector<TelegramMessage> messages = bot.getMessages(
                                               MAX_AMOUNT_TELEGRAM_MESSAGES);
       for (auto message : messages) {
-        // format output
+        // TODO CAMBIAR PARA NO HACER SUBSTRING EN TODOS (PONER UN IF GRANDE Y DESPUES TODOS LOS OTROS, O DIRECTO RECORTAR AL PRINCIPIO)
         size_t firstSpacePos = message.text.find_first_of(' ');
         if (message.text == "/start")
           sendWelcomeMessage(message.from_id);
@@ -120,6 +120,16 @@ void eGardener::execute() {
       conditionableLight.execute(values);
       checkControlCondition = false;
     }
+    if (checkResetWiFi) {
+      resetWiFi();
+      ThisThread::sleep_for(1s);
+      checkWiFiConnected = true;
+      checkResetWiFi = false;
+    }
+    if (checkWiFiConnected) {
+      if (checkAndSaveNewWiFi())
+        checkWiFiConnected = false;
+    }
     // Por ahora, despues con timers y booleans.
   }
 }
@@ -134,6 +144,10 @@ void eGardener::activateCheckClock() {
 
 void eGardener::activateCheckControlCondition() {
   checkControlCondition = true;
+}
+
+void eGardener::activateResetWiFi() {
+  checkResetWiFi = true;
 }
 
 void eGardener::sendWelcomeMessage(const std::string& user_id) {
@@ -161,8 +175,8 @@ void eGardener::sendMoisture(const std::string& user_id) {
   float value = lightSensor.sense();
   if (value < 0)
     bot.sendMessage(user_id,
-                    R"(You need to calibrate moisture sensor with
-                      /calibratemoisturesensor)");
+                    R"(You need to calibrate moisture sensor with \
+                    /calibratemoisturesensor)");
   else
     bot.sendMessage(user_id, "[" + time.formatTime() + " " + time.formatDate() + "] " +
                     MOISTURE_EMOJI + (" " + 
@@ -174,8 +188,8 @@ void eGardener::sendLight(const std::string& user_id) {
   float value = lightSensor.sense();
   if (value < 0)
     bot.sendMessage(user_id,
-                    R"(You need to calibrate light sensor with
-                      /calibratelightsensor)");
+                    R"(You need to calibrate light sensor with \
+                    /calibratelightsensor)");
   else
     bot.sendMessage(user_id, "[" + time.formatTime() + " " + time.formatDate() + "] " +
                     LIGHT_EMOJI + (" " + 
@@ -367,8 +381,8 @@ void eGardener::setSenseInterval(const std::string& user_id, const std::string& 
 }
 
 void eGardener::setup() {
-  printf("Inicializando...\n");
-  printf("Cargando datos de EEPROM...\n");
+  printf("Initializing...\n");
+  printf("Loading data from EEPROM...\n");
   setupMemoryDist();
   bool there;
   // leo wifi.
@@ -480,30 +494,11 @@ void eGardener::setup() {
     conditionableLight.setConditions(conditions);
   }
 
-  printf("Conectando a Wi-Fi...\n");
+  printf("Connecting to Wi-Fi...\n");
 
-  uint8_t wifiTryCounter = 0;
-  WiFiStatus status;
-  while ((status = wifi.getStatus()) != WiFiStatus::WL_CONNECTED
-         && wifiTryCounter < WIFI_CONNECT_TRIES) {
-    if (status == WiFiStatus::WL_FAILED_COMM) {
-      printf("Failed comm\n");
-      ThisThread::sleep_for(1s);
-      continue;
-    }
-    printf("Intento %u\n", wifiTryCounter);
-    wifi.connect(wifi_ssid, wifi_pwd);
-    wifiTryCounter++;
-  }
-  if (wifi.getStatus() == WiFiStatus::WL_CONNECTED) {
-    printf("Conectado a Wi-Fi correctamente\n");
-    rtc.sync(wifi, TIMEZONE);
-    bot.setup();
-  } else {
-    printf("No se pudo conectar a Wi-Fi\n");
-  }
+  connectToWiFi();
 
-  printf("Configurando tickers...\n");
+  printf("Setting up tickers and interruptions...\n");
   // setea tickers
   tickerCheckMessages.attach(callback(this, &eGardener::activateCheckMessages),
                 TELEGRAM_POLL_TIME);
@@ -511,6 +506,8 @@ void eGardener::setup() {
                 CLOCK_POLL_TIME);
   tickerCheckControlCondition.attach(callback(this, &eGardener::activateCheckControlCondition),
                 CONTROL_CONDITION_POLL_TIME);
+  interruptResetWiFi.rise(callback(this, &eGardener::activateResetWiFi));
+  
 
   printf("Listo!\n");
 }
@@ -527,6 +524,30 @@ std::string eGardener::getTelegramResponseForInteraction(TelegramBot& bot) {
   return response;
 }
 
+void eGardener::connectToWiFi() {
+  uint8_t wifiTryCounter = 0;
+  WiFiStatus status;
+  do {
+    if (status == WiFiStatus::WL_FAILED_COMM) {
+      printf("Failed communication with Wi-Fi. Retrying..\n");
+      ThisThread::sleep_for(1s);
+      continue;
+    }
+    printf("Try %u\n", wifiTryCounter);
+    wifi.connect(wifi_ssid, wifi_pwd);
+    ThisThread::sleep_for(1s);
+    wifiTryCounter++;
+  } while ((status = wifi.getStatus()) != WiFiStatus::WL_CONNECTED
+            && wifiTryCounter < WIFI_CONNECT_RETRIES);
+         
+  if (wifi.getStatus() == WiFiStatus::WL_CONNECTED) {
+    printf("Wi-Fi connected succesfully\n");
+    rtc.sync(wifi, TIMEZONE);
+    bot.setup();
+  } else {
+    printf("Couldn't connect to Wi-Fi\n");
+  }
+}
 
 void eGardener::setupMemoryDist() {
   uint16_t position = 0;
@@ -536,7 +557,7 @@ void eGardener::setupMemoryDist() {
   memoryDist.insert(std::pair<std::string, std::pair<uint16_t, uint8_t>>
                     ("wifi", std::pair<uint16_t, uint8_t>(position,
                      sizeof(bool) + MAX_SSID_LENGTH + MAX_PWD_LENGTH + 2)));
-  position += sizeof(bool) + MAX_SSID_LENGTH + MAX_PWD_LENGTH;
+  position += sizeof(bool) + MAX_SSID_LENGTH + MAX_PWD_LENGTH + 2;
 
   memoryDist.insert(std::pair<std::string, std::pair<uint16_t, uint8_t>>
                     ("ls", std::pair<uint16_t, uint8_t>(position,
@@ -688,6 +709,33 @@ void eGardener::setControlStatus(const std::string& user_id, const std::string& 
   }
 
   bot.sendMessage(user_id, (std::string("Control ") + body[0]) + " " + ((activated) ? "activated" : "deactivated"));
+}
+
+void eGardener::resetWiFi() {
+  wifi.setAsAP();
+  printf("Seteado como AP\n");
+}
+
+bool eGardener::checkAndSaveNewWiFi() {
+  if (wifi.getStatus() == WiFiStatus::WL_AS_AP) {
+    return false;
+  }
+
+  std::string ssid, pwd;
+
+  wifi.getSsidAndPwd(ssid, pwd);
+
+  if (ssid.length() > MAX_SSID_LENGTH || pwd.length() > MAX_PWD_LENGTH)
+    return true;
+
+  auto address = memoryDist.find("wifi")->second;
+  eeprom.write(address.first, true);
+  eeprom.write(address.first + sizeof(bool), ssid);
+  eeprom.write(address.first + sizeof(bool) + MAX_SSID_LENGTH + 1, pwd);
+
+  connectToWiFi();
+
+  return true;
 }
 
 void eGardener::activate() {

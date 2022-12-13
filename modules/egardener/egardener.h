@@ -43,7 +43,7 @@
 #define MAX_SSID_LENGTH 31  // para que entre en una pagina de la eeprom + un /0
 #define MAX_PWD_LENGTH 31  // para que entre en una pagina de la eeprom.
 
-#define WIFI_CONNECT_TRIES 3
+#define WIFI_CONNECT_RETRIES 3
 #define TIMEZONE "America/Argentina/Buenos_Aires"
 #define MAX_AMOUNT_TELEGRAM_MESSAGES 5
 
@@ -77,7 +77,8 @@ class eGardener : public ActivableAction {
   TelegramBot bot;
   Control controlLight, controlWater;
   Ticker tickerCheckMessages, tickerCheckClock, tickerCheckControlCondition;
-  bool checkMessages, checkClock, checkControlCondition;
+  InterruptIn interruptResetWiFi;
+  bool checkMessages, checkClock, checkControlCondition, checkResetWiFi, checkWiFiConnected;
 
   bool controlWaterManually, controlLightManually;
   
@@ -90,6 +91,9 @@ class eGardener : public ActivableAction {
   void activateCheckMessages();
   void activateCheckClock();
   void activateCheckControlCondition();
+  void activateResetWiFi();
+
+  void connectToWiFi();
 
   void sendWelcomeMessage(const std::string&);
   void sendTemperature(const std::string&);
@@ -111,6 +115,9 @@ class eGardener : public ActivableAction {
   void sendControlIntervalStatus(const std::string&, const std::string&);
   void sendControlStatus(const std::string&, const std::string&);
   void sendControlConditionStatus(const std::string&, const std::string&);
+
+  void resetWiFi();
+  bool checkAndSaveNewWiFi();
 
   void activate();
   void deactivate();

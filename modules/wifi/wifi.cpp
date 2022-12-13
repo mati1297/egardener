@@ -9,7 +9,7 @@
 // poner const
 
 WiFi::WiFi(PinName tx_pin, PinName rx_pin, int baud):
-           serial(tx_pin, rx_pin, baud), ssid(), pwd() {
+           serial(tx_pin, rx_pin, baud), ssid(), pwd(), asAP(false) {
   // ver lo de que cuando inicio sin reiniciar el otro se rompe.
   //serial.sync();
   ThisThread::sleep_for(1s); // Doy tiempo a inicializar el serial.
@@ -46,6 +46,8 @@ std::string WiFi::connect(const std::string &ssid, const std::string &pwd) {
   this->ssid = ssid;
   this->pwd = pwd;
 
+  restart();
+
   std::string str = "c" + this->ssid + (SEPARATOR_CHAR + this->pwd) + "\n";
 
   serial.write(str.c_str(), str.length());
@@ -81,6 +83,9 @@ WiFiStatus WiFi::getStatus() {
 }
 
 std::string WiFi::post(const std::string &server, const std::string &request) {
+  if (asAP)
+    return "";
+
   std::string str = "p" + server + (SEPARATOR_CHAR + request) + "\n";
 
   serial.write(str.c_str(), str.length());
@@ -91,11 +96,46 @@ std::string WiFi::post(const std::string &server, const std::string &request) {
 }
 
 std::string WiFi::get(const std::string &url) {
-  std::string str = "g" + url + "\n";
+  if (asAP)
+    return "";
+
+  std::string str = "g" + url + "\n\0";
 
   serial.write(str.c_str(), str.length());
 
   std::string response = readToString();
 
   return response;
+}
+
+void WiFi::setAsAP() {
+  std::string str = "a\n";
+
+  serial.write(str.c_str(), str.length());
+
+  asAP = true;
+}
+
+void WiFi::getSsidAndPwd(std::string& ssid, std::string& pwd) {
+  std::string str = "f\n";
+
+  serial.write(str.c_str(), str.length());
+
+  ssid = readToString();
+  pwd = readToString();
+
+  ssid[ssid.length() - 2] = 0;
+  pwd[pwd.length() - 2] = 0;
+
+  asAP = false;
+}
+
+void WiFi::restart() {
+  std::string str = "r\n";
+
+  serial.write(str.c_str(), str.length());
+
+  readToString();
+
+  asAP = false;
 }
