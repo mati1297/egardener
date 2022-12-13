@@ -856,7 +856,6 @@ void eGardener::activate() {
   std::vector<std::string> users;
   userRegister.getUsers(users);
   for (auto user : users) {
-    printf("%s\n", user.c_str());
     sendTemperature(user);
   }
 }

@@ -59,6 +59,11 @@ bool UserRegister::setPwd(const std::string& old_pwd, const std::string& pwd) {
   if (pwd.length() > MAX_PWD_USER_LENGTH)
     return false;
 
+  if (pwd.length() == 0) {
+    thereIsPwd = false;
+    return true;
+  }
+
   this->pwd = pwd;
   thereIsPwd = true;
 
