@@ -41,8 +41,8 @@ eGardener::eGardener(): memoryDist(),
             checkMessages(false), checkClock(false), checkControlCondition(false), checkResetWiFi(false), checkWiFiConnected(false),
             controlWaterManually(false), controlLightManually(false),
             periodicSense(*this), periodicWater(controlWater, false, false), periodicLight(controlLight, false, false),
-            conditionableWater(controlWater, std::vector<char>{CONTROL_HUMIDITY_CHAR, CONTROL_LIGHT_CHAR, CONTROL_TEMPERATURE_CHAR}),
-            conditionableLight(controlLight, std::vector<char>{CONTROL_HUMIDITY_CHAR, CONTROL_LIGHT_CHAR, CONTROL_TEMPERATURE_CHAR}),
+            conditionableWater(controlWater, std::vector<char>{CONTROL_HUMIDITY_CHAR, CONTROL_LIGHT_CHAR, CONTROL_TEMPERATURE_CHAR, CONTROL_MOISTURE_CHAR}),
+            conditionableLight(controlLight, std::vector<char>{CONTROL_HUMIDITY_CHAR, CONTROL_LIGHT_CHAR, CONTROL_TEMPERATURE_CHAR, CONTROL_MOISTURE_CHAR}),
             userRegister() {
   setup();
 }
@@ -84,6 +84,8 @@ void eGardener::execute() {
           sendMoisture(message.from_id);
         else if (message.text == "/calibratelightsensor")
           calibrateLightSensor(message.from_id);
+        else if (message.text == "/calibratemoisturesensor")
+          calibrateMoistureSensor(message.from_id);
         else if(message.text == "/senseall")
           sendSenseAll(message.from_id);
         else if (message.text == "/activatesenseinterval")
@@ -348,6 +350,38 @@ void eGardener::calibrateLightSensor(const std::string& user_id) {
   }
 }
 
+void eGardener::calibrateMoistureSensor(const std::string& user_id) {
+  float min, max;
+
+  bot.sendMessage(user_id, "Keep your moisture sensor in the air and type ok (any other text to cancel)");
+  if (getTelegramResponseForInteraction() != "ok") {
+    bot.sendMessage(user_id, "Operation cancelled");
+    return;
+  }
+  max = lightSensor.sense(true);
+
+  printf("max = %f\n", max);
+
+  bot.sendMessage(user_id, "Put your moisture sensor in a glass with water (IMPORTANT: leave half a centimetre below the line) and type ok (any other text to cancel)");
+  if (getTelegramResponseForInteraction() != "ok") {
+              bot.sendMessage(user_id, "Operation cancelled");
+    return;
+  }
+  min = lightSensor.sense(true);
+
+  printf("min = %f\n", min);
+
+  if (lightSensor.setMaxAndMin(max, min)) {
+    bot.sendMessage(user_id, R"(Moisture sensor calibrated succesfully)");
+    auto address = memoryDist.find("ms")->second;
+    eeprom.write(address.first, true);
+    eeprom.write(address.first + sizeof(bool), max);
+    eeprom.write(address.first + sizeof(bool) + sizeof(float), min);
+  } else {
+    bot.sendMessage(user_id, "An error ocurred, try again");
+  }
+}
+
 void eGardener::setSenseIntervalActivated(const std::string& user_id, bool activated) {
   periodicSense.setActivatedStatus(activated);
 
@@ -586,6 +620,15 @@ void eGardener::setup() {
     conditionableLight.setConditions(conditions);
   }
 
+  address = memoryDist.find("ms")->second;
+  eeprom.read(address.first, there);
+  if (there) {
+    float ls_max, ls_min;
+    eeprom.read(address.first + sizeof(bool), ls_max);
+    eeprom.read(address.first + sizeof(bool) + sizeof(float), ls_min);
+    moistureSensor.setMaxAndMin(ls_max, ls_min);
+  }
+
   address = memoryDist.find("ur")->second;
   eeprom.read(address.first, there);
 
@@ -628,8 +671,13 @@ std::string eGardener::getTelegramResponseForInteraction() {
   while (messages.empty() && counter < TELEGRAM_RESPONSE_WAIT_TIMEOUT) {
     messages = bot.getMessages(1);
     ThisThread::sleep_for(TELEGRAM_POLL_TIME_WAITING);
+    counter++;
   }
-  std::string response = messages[0].text;
+  std::string response;
+  if (counter == TELEGRAM_RESPONSE_WAIT_TIMEOUT)
+    response = "";
+  else
+    response = messages[0].text;
   transform(response.begin(), response.end(), response.begin(), ::tolower);
   return response;
 }
@@ -700,6 +748,11 @@ void eGardener::setupMemoryDist() {
   memoryDist.insert(std::make_pair("ur", std::make_pair(position + 10, sizeof(bool) + MAX_PWD_USER_LENGTH + 1
                                                        + sizeof(uint8_t) + sizeof(uint32_t) * MAX_NUMBER_USERS)));
   position += 10 + sizeof(bool) + MAX_PWD_USER_LENGTH + 1 + sizeof(uint8_t) + sizeof(uint32_t) * MAX_NUMBER_USERS;
+
+  memoryDist.insert(std::pair<std::string, std::pair<uint16_t, uint8_t>>
+                    ("ms", std::pair<uint16_t, uint8_t>(position,
+                     sizeof(bool) + sizeof(float) * 2)));
+  position += sizeof(bool) + sizeof(float) * 2;
                                                     
 }
 
@@ -856,7 +909,7 @@ void eGardener::activate() {
   std::vector<std::string> users;
   userRegister.getUsers(users);
   for (auto user : users) {
-    sendTemperature(user);
+    sendSenseAll(user);
   }
 }
 
