@@ -54,6 +54,8 @@ void eGardener::execute() {
       for (auto message : messages) {
         // TODO CAMBIAR PARA NO HACER SUBSTRING EN TODOS (PONER UN IF GRANDE Y DESPUES TODOS LOS OTROS, O DIRECTO RECORTAR AL PRINCIPIO)
         size_t firstSpacePos = message.text.find_first_of(' ');
+        std::string cmd = message.text.substr(0, firstSpacePos);
+        std::string body = message.text.substr(firstSpacePos + 1);
         if (message.text == "/start")
           sendWelcomeMessage(message.from_id);
         else if (message.text == "/temperature")
@@ -62,6 +64,8 @@ void eGardener::execute() {
           sendHumidity(message.from_id);
         else if (message.text == "/light")
           sendLight(message.from_id);
+        else if (message.text == "/moisture")
+          sendMoisture(message.from_id);
         else if (message.text == "/calibratelightsensor")
           calibrateLightSensor(message.from_id);
         else if(message.text == "/senseall")
@@ -72,34 +76,34 @@ void eGardener::execute() {
           setSenseIntervalActivated(message.from_id, false);
         else if (message.text == "/senseintervalstatus")
           sendSenseIntervalStatus(message.from_id);
-        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/setsenseinterval")
+        else if (firstSpacePos != std::string::npos && cmd == "/setsenseinterval")
           setSenseInterval(message.from_id, message.text.substr(firstSpacePos+1));
         else if (message.text == "/nextsensetime")
           sendNextSenseTime(message.from_id);
-        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/activatecontrolcondition")
-          setControlConditionsStatus(message.from_id, message.text.substr(firstSpacePos+1), true);
-        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/deactivatecontrolcondition")
-          setControlConditionsStatus(message.from_id, message.text.substr(firstSpacePos+1), false);
-        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/setcontrolcondition")
-          setControlConditions(message.from_id, message.text.substr(firstSpacePos+1));
-        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/setcontrolinterval")
-          setControlInterval(message.from_id, message.text.substr(firstSpacePos+1));
-        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/activatecontrolinterval")
-          setControlIntervalStatus(message.from_id, message.text.substr(firstSpacePos+1), true);
-        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/deactivatecontrolinterval")
-          setControlIntervalStatus(message.from_id, message.text.substr(firstSpacePos+1), false);
-        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/controlintervalstatus")
-          sendControlIntervalStatus(message.from_id, message.text.substr(firstSpacePos+1));
-        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/nextcontroltime")
-          sendNextControlTime(message.from_id, message.text.substr(firstSpacePos+1));
-        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/activatecontrol")
-          setControlStatus(message.from_id, message.text.substr(firstSpacePos+1), true);
-        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/deactivatecontrol")
-          setControlStatus(message.from_id, message.text.substr(firstSpacePos+1), false);
-        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/controlstatus")
-          sendControlStatus(message.from_id, message.text.substr(firstSpacePos+1));
-        else if (firstSpacePos != std::string::npos && message.text.substr(0, firstSpacePos) == "/controlconditionstatus")
-          sendControlConditionStatus(message.from_id, message.text.substr(firstSpacePos+1));
+        else if (firstSpacePos != std::string::npos && cmd == "/activatecontrolcondition")
+          setControlConditionsStatus(message.from_id, body, true);
+        else if (firstSpacePos != std::string::npos && cmd == "/deactivatecontrolcondition")
+          setControlConditionsStatus(message.from_id, body, false);
+        else if (firstSpacePos != std::string::npos && cmd == "/setcontrolcondition")
+          setControlConditions(message.from_id, body);
+        else if (firstSpacePos != std::string::npos && cmd == "/setcontrolinterval")
+          setControlInterval(message.from_id, body);
+        else if (firstSpacePos != std::string::npos && cmd == "/activatecontrolinterval")
+          setControlIntervalStatus(message.from_id, body, true);
+        else if (firstSpacePos != std::string::npos && cmd == "/deactivatecontrolinterval")
+          setControlIntervalStatus(message.from_id, body, false);
+        else if (firstSpacePos != std::string::npos && cmd == "/controlintervalstatus")
+          sendControlIntervalStatus(message.from_id, body);
+        else if (firstSpacePos != std::string::npos && cmd == "/nextcontroltime")
+          sendNextControlTime(message.from_id, body);
+        else if (firstSpacePos != std::string::npos && cmd == "/activatecontrol")
+          setControlStatus(message.from_id, body, true);
+        else if (firstSpacePos != std::string::npos && cmd == "/deactivatecontrol")
+          setControlStatus(message.from_id, body, false);
+        else if (firstSpacePos != std::string::npos && cmd == "/controlstatus")
+          sendControlStatus(message.from_id, body);
+        else if (firstSpacePos != std::string::npos && cmd == "/controlconditionstatus")
+          sendControlConditionStatus(message.from_id, body);
         else
           bot.sendMessage(message.from_id, "Command unknown");
       }
@@ -172,11 +176,11 @@ void eGardener::sendHumidity(const std::string& user_id) {
 
 void eGardener::sendMoisture(const std::string& user_id) {
   Time time = rtc.get();
-  float value = lightSensor.sense();
+  float value = moistureSensor.sense();
   if (value < 0)
     bot.sendMessage(user_id,
-                    R"(You need to calibrate moisture sensor with \
-                    /calibratemoisturesensor)");
+                    R"(You need to calibrate moisture sensor with )" +
+                    std::string(R"(/calibratemoisturesensor)"));
   else
     bot.sendMessage(user_id, "[" + time.formatTime() + " " + time.formatDate() + "] " +
                     MOISTURE_EMOJI + (" " + 
@@ -188,8 +192,8 @@ void eGardener::sendLight(const std::string& user_id) {
   float value = lightSensor.sense();
   if (value < 0)
     bot.sendMessage(user_id,
-                    R"(You need to calibrate light sensor with \
-                    /calibratelightsensor)");
+                    R"(You need to calibrate light sensor with )" +
+                    std::string(R"(/calibratelightsensor)"));
   else
     bot.sendMessage(user_id, "[" + time.formatTime() + " " + time.formatDate() + "] " +
                     LIGHT_EMOJI + (" " + 
@@ -201,12 +205,12 @@ void eGardener::sendSenseAll(const std::string& user_id) {
   float valueMoisture = moistureSensor.sense();
   if (valueLight < 0) {
     bot.sendMessage(user_id,
-                    R"(You need to calibrate light sensor with
-                      /calibratemoisturesensor)");
+                    R"(You need to calibrate light sensor with )" +
+                    std::string(R"(/calibratelightsensor)"));
   } else if (valueMoisture < 0) {
     bot.sendMessage(user_id,
-                R"(You need to calibrate moisture sensor with
-                  /calibratemoisturesensor)"); 
+                R"(You need to calibrate moisture sensor with )" +
+                    std::string(R"(/calibratemoisturesensor)"));
   } else {
     Time time = rtc.get();
     std::string messageTime = "[" + time.formatTime() + " " + time.formatDate() + "]";
@@ -227,17 +231,17 @@ void eGardener::sendSenseAll(const std::string& user_id) {
 void eGardener::calibrateLightSensor(const std::string& user_id) {
   float min, max;
 
-  bot.sendMessage(user_id, R"(Put direct light on the sensor
-                                    with your phone flash and type ok (any
-                                    other text to cancel).)");
+  bot.sendMessage(user_id, R"(Put direct light on the sensor )" + 
+                           std::string(R"(with your phone flash and type ok)")
+                           + R"( (any other text to cancel).)");
   if (getTelegramResponseForInteraction(bot) != "ok") {
-    printf("Operation cancelled");
+    bot.sendMessage(user_id, "Operation cancelled");
     return;
   }
   max = lightSensor.sense(true);
 
-  bot.sendMessage(user_id, R"(Now put your finger on the sensor
-                                      type ok (any other text to cancel).)");
+  bot.sendMessage(user_id, std::string(R"(Now put your finger on the sensor)")
+                           + R"(and type ok (any other text to cancel).)");
   if (getTelegramResponseForInteraction(bot) != "ok") {
               bot.sendMessage(user_id, "Operation cancelled");
     return;
@@ -245,8 +249,7 @@ void eGardener::calibrateLightSensor(const std::string& user_id) {
   min = lightSensor.sense(true);
 
   if (lightSensor.setMaxAndMin(max, min)) {
-    bot.sendMessage(user_id, R"(Light sensor calibrated 
-                                        succesfully)");
+    bot.sendMessage(user_id, R"(Light sensor calibrated succesfully)");
     auto address = memoryDist.find("ls")->second;
     eeprom.write(address.first, true);
     eeprom.write(address.first + sizeof(bool), max);
