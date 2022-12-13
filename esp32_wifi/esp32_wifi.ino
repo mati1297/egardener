@@ -9,7 +9,10 @@
 
 #define DELAY_WIFI 500
 #define TIMEOUT_WIFI 20
-#define PARAM_SEPARATOR ','
+#define PARAM_SEPARATOR char(254)
+
+#define MAX_SSID_LENGTH 31  // para que entre en una pagina de la eeprom + un /0
+#define MAX_PWD_LENGTH 31  // para que entre en una pagina de la eeprom.
 
 #define LENGTH_BYTES 6
 
@@ -18,9 +21,12 @@ AsyncWebServer server(80);
 const char* ssid_ap = "esp32";
 const char* pwd_ap = "12345678";
 
+#define WL_AS_AP 10
+
 String ssid_connect = "";
 String pwd_connect = "";
 bool connect_to_wifi = false;
+bool asAP = false;
 
 IPAddress local_ip(192, 168, 4, 1);
 IPAddress gateway(192, 168, 1, 1);
@@ -49,19 +55,14 @@ Vector<String> parseParameters(const String&);
 void setup() {
   Serial.begin(115200);
   Serial2.begin(115200);
+
+  sendToSerial2('r');
 }
 
 
 void loop() {
   String received;
   char cmd;
-
-  if (connect_to_wifi) {
-    WiFi.softAPdisconnect(true);
-    if (!connectToWiFi(ssid_connect, pwd_connect))
-      setAsAP();
-    connect_to_wifi = false;
-  }
 
   if (Serial2.available()) {
     received = Serial2.readString();
@@ -70,19 +71,26 @@ void loop() {
     ssize_t params_size = 0;
     Vector<String> params = parseParameters(received.substring(1));
     Serial.println(received);
-    Serial.println(cmd);
     switch (cmd) {
       case 'c':
         if (params_size > 2)
           Serial.println("Error en cantidad de parametros");
-        disconnectFromWiFi();
+        if (asAP) {
+          WiFi.softAPdisconnect(true);
+          asAP = false;
+        }
         sendToSerial2(connectToWiFi(params[0], params[1]));
         break;
       case 'w':
         if (params_size > 0)
           Serial.println("Error en cantidad de parametros");
-        Serial.println(getWiFiStatus());
-        sendToSerial2(getWiFiStatus());
+        if (asAP) {
+          sendToSerial2(WL_AS_AP);
+          Serial.println(WL_AS_AP);
+        } else {
+          sendToSerial2(getWiFiStatus());
+          Serial.println(getWiFiStatus());
+        }
         break;
       case 'p':
         if (params_size > 2)
@@ -102,9 +110,19 @@ void loop() {
       case 'a':
         if (params_size > 0)
           Serial.println("Error en cantidad de parametros");
+        disconnectFromWiFi();
+        asAP = true;
         setAsAP();
         break;
-      // para guardarme la ssid.
+      case 'f':
+        if (params_size > 0)
+          Serial.println("Error en la cantidad de parametros");
+        sendToSerial2(ssid_connect);
+        sendToSerial2(pwd_connect);
+        break;
+      case 'r':
+        ESP.restart();
+        break;
     }
     // Serial2.flush();
   }
@@ -211,10 +229,15 @@ void setAsAP() {
       ssid_connect = request->getParam("ssid_string")->value();
       pwd_connect = request->getParam("pwd_string")->value();
     }
+
+    ssid_connect.trim();
+    pwd_connect.trim();
+
+    WiFi.softAPdisconnect(true);
+    asAP = false;
+
     Serial.println(ssid_connect);
     Serial.println(pwd_connect);
-
-    connect_to_wifi = true;
   });
   server.onNotFound(notFound);
   server.begin();
@@ -233,6 +256,8 @@ String post(String server, String request) {
   http.addHeader("Content-Type", "application/x-www-form-urlencoded");
   http.POST(request);
   String response = http.getString();
+  Serial.print("Response ");
+  Serial.println(response);
   http.end();
   return response;
 }
