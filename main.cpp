@@ -4,7 +4,6 @@
  */
 
 #include "mbed.h"
-#include "memory.h"
 #include "egardener.h"
 
 UnbufferedSerial uartUsb(USBTX, USBRX, 115200);
