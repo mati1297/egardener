@@ -66,6 +66,10 @@ void PeriodicAction::setActivatedStatus(bool activated, const Time& now) {
 }
 
 void PeriodicAction::setActivatedStatus(bool activated) {
+  if (!activated && executing) {
+    action.deactivate();
+    executing = false;
+  }
   this->activated = activated;
 }
 

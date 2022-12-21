@@ -358,18 +358,14 @@ void eGardener::calibrateMoistureSensor(const std::string& user_id) {
     bot.sendMessage(user_id, "Operation cancelled");
     return;
   }
-  max = lightSensor.sense(true);
+  min = moistureSensor.sense(true);
 
-  printf("max = %f\n", max);
-
-  bot.sendMessage(user_id, "Put your moisture sensor in a glass with water (IMPORTANT: leave half a centimetre below the line) and type ok (any other text to cancel)");
+  bot.sendMessage(user_id, "Put your moisture sensor in a glass with water (IMPORTANT: leave half a centimetre below the line), wait at least 20 seconds and type ok (any other text to cancel)");
   if (getTelegramResponseForInteraction() != "ok") {
               bot.sendMessage(user_id, "Operation cancelled");
     return;
   }
-  min = lightSensor.sense(true);
-
-  printf("min = %f\n", min);
+  max = moistureSensor.sense(true);
 
   if (lightSensor.setMaxAndMin(max, min)) {
     bot.sendMessage(user_id, R"(Moisture sensor calibrated succesfully)");
@@ -665,6 +661,7 @@ void eGardener::setup() {
 }
 
 // devuelve todo en minusculas.
+// Se le podri agregar para que tome del mismo usuario si o si.
 std::string eGardener::getTelegramResponseForInteraction() {
   std::vector<TelegramMessage> messages;
   uint8_t counter = 0;

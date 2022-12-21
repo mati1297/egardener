@@ -65,7 +65,7 @@
 
 #define RESET_WIFI_PIN BUTTON1
 
-#define TELEGRAM_RESPONSE_WAIT_TIMEOUT 50
+#define TELEGRAM_RESPONSE_WAIT_TIMEOUT 240
 
 
 class eGardener : public ActivableAction {
