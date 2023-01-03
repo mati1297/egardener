@@ -1,8 +1,8 @@
 // Copyright 2022 Matías Charrut
 // This code is licensed under MIT license (see LICENSE for details)
 
-#ifndef MODULES_LIGHT_SENSOR_LIGHT_SENSOR_H_
-#define MODULES_LIGHT_SENSOR_LIGHT_SENSOR_H_
+#ifndef MODULES_ANALOG_SENSOR_ANALOG_SENSOR_H_
+#define MODULES_ANALOG_SENSOR_ANALOG_SENSOR_H_
 
 #include "mbed.h"
 
@@ -37,4 +37,4 @@ class AnalogSensor {
   bool setMaxAndMin(float, float);
 };
 
-#endif  // MODULES_LIGHT_SENSOR_LIGHT_SENSOR_H_
+#endif  // MODULES_ANALOG_SENSOR_ANALOG_SENSOR_H_

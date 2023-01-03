@@ -1,7 +1,5 @@
-/* mbed Microcontroller Library
- * Copyright (c) 2019 ARM Limited
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright 2022 Matías Charrut
+// This code is licensed under MIT license (see LICENSE for details)
 
 #include "mbed.h"
 #include "trh_sensor.h"
@@ -12,7 +10,8 @@ UnbufferedSerial uartUsb(USBTX, USBRX, 115200);
 #define I2C_PORT2_SCL_PIN PB_8
 #define ADDRESS_SENSOR_RH_TEMP 0x40
 
-TRHSensor trhSensor(I2C_PORT2_SDA_PIN, I2C_PORT2_SCL_PIN, ADDRESS_SENSOR_RH_TEMP);
+TRHSensor trhSensor(I2C_PORT2_SDA_PIN, I2C_PORT2_SCL_PIN,
+                    ADDRESS_SENSOR_RH_TEMP);
 
 InterruptIn interrupt(BUTTON1);
 bool senseBool;

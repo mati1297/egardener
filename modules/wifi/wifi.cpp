@@ -6,13 +6,9 @@
 #include "mbed.h"
 #include "wifi.h"
 
-// poner const
-
 WiFi::WiFi(PinName tx_pin, PinName rx_pin, int baud):
            serial(tx_pin, rx_pin, baud), ssid(), pwd(), asAP(false) {
-  // ver lo de que cuando inicio sin reiniciar el otro se rompe.
-  //serial.sync();
-  ThisThread::sleep_for(1s); // Doy tiempo a inicializar el serial.
+  ThisThread::sleep_for(1s);
 }
 
 std::string WiFi::readNBytes(size_t size) {
@@ -74,7 +70,7 @@ WiFiStatus WiFi::getStatus() {
   std::string response = readToString();
 
   char * endptr;
-  unsigned long code = strtoul(response.c_str(), &endptr, 10);
+  uint64_t code = strtoul(response.c_str(), &endptr, 10);
 
   if (*endptr == response[0])
     return WiFiStatus::WL_FAILED_COMM;

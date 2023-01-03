@@ -1,3 +1,6 @@
+// Copyright 2022 Matías Charrut
+// This code is licensed under MIT license (see LICENSE for details)
+
 #include <string>
 #include <vector>
 #include "mbed.h"
@@ -25,7 +28,7 @@ bool UserRegister::isUserRegistered(uint32_t user_id) {
 uint8_t UserRegister::addUser(uint32_t user, const std::string& pwd) {
   if (isUserRegistered(user))
     return 1;
-  
+
   if (thereIsPwd && pwd != this->pwd)
     return 2;
 

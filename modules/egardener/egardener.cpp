@@ -36,13 +36,23 @@ eGardener::eGardener(): memoryDist(),
                  ADDRESS_EEPROM),
             trhSensor(I2C_PORT2_SDA_PIN, I2C_PORT2_SCL_PIN,
                   ADDRESS_SENSOR_RH_TEMP),
-            lightSensor(LIGHT_SENSOR_PIN), moistureSensor(MOISTURE_SENSOR_PIN), bot(wifi, TELEGRAM_BOT_TOKEN), controlLight(LIGHT_PIN), controlWater(WATER_PIN),
-            tickerCheckMessages(), tickerCheckClock(), tickerCheckControlCondition(), interruptResetWiFi(RESET_WIFI_PIN),
-            checkMessages(false), checkClock(false), checkControlCondition(false), checkResetWiFi(false), checkWiFiConnected(false),
-            controlWaterManually(false), controlLightManually(false),
-            periodicSense(*this), periodicWater(controlWater, false, false), periodicLight(controlLight, false, false),
-            conditionableWater(controlWater, std::vector<char>{CONTROL_HUMIDITY_CHAR, CONTROL_LIGHT_CHAR, CONTROL_TEMPERATURE_CHAR, CONTROL_MOISTURE_CHAR}),
-            conditionableLight(controlLight, std::vector<char>{CONTROL_HUMIDITY_CHAR, CONTROL_LIGHT_CHAR, CONTROL_TEMPERATURE_CHAR, CONTROL_MOISTURE_CHAR}),
+            lightSensor(LIGHT_SENSOR_PIN), moistureSensor(MOISTURE_SENSOR_PIN),
+            bot(wifi, TELEGRAM_BOT_TOKEN), controlLight(LIGHT_PIN),
+            controlWater(WATER_PIN),
+            tickerCheckMessages(), tickerCheckClock(),
+            tickerCheckControlCondition(), interruptResetWiFi(RESET_WIFI_PIN),
+            checkMessages(false), checkClock(false),
+            checkControlCondition(false), checkResetWiFi(false),
+            checkWiFiConnected(false), controlWaterManually(false),
+            controlLightManually(false), periodicSense(*this),
+            periodicWater(controlWater, false, false),
+            periodicLight(controlLight, false, false),
+            conditionableWater(controlWater, std::vector<char>
+            {CONTROL_HUMIDITY_CHAR, CONTROL_LIGHT_CHAR,
+            CONTROL_TEMPERATURE_CHAR, CONTROL_MOISTURE_CHAR}),
+            conditionableLight(controlLight, std::vector<char>
+            {CONTROL_HUMIDITY_CHAR, CONTROL_LIGHT_CHAR,
+            CONTROL_TEMPERATURE_CHAR, CONTROL_MOISTURE_CHAR}),
             userRegister() {
   setup();
 }
@@ -65,7 +75,8 @@ void eGardener::execute() {
           continue;
         }
         if (!userRegister.isUserRegistered(message.from_id)) {
-          bot.sendMessage(message.from_id, "You need to be registered. Use /addme followed by password to register.");
+          bot.sendMessage(message.from_id, "You need to be registered. " +
+                          "Use /addme followed by password to register.");
           continue;
         }
         if (firstSpacePos != std::string::npos && cmd == "/setpwd")
@@ -84,7 +95,7 @@ void eGardener::execute() {
           calibrateLightSensor(message.from_id);
         else if (message.text == "/calibratemoisturesensor")
           calibrateMoistureSensor(message.from_id);
-        else if(message.text == "/senseall")
+        else if (message.text == "/senseall")
           sendSenseAll(message.from_id);
         else if (message.text == "/activatesenseinterval")
           setSenseIntervalActivated(message.from_id, true);
@@ -92,33 +103,46 @@ void eGardener::execute() {
           setSenseIntervalActivated(message.from_id, false);
         else if (message.text == "/senseintervalstatus")
           sendSenseIntervalStatus(message.from_id);
-        else if (firstSpacePos != std::string::npos && cmd == "/setsenseinterval")
-          setSenseInterval(message.from_id, message.text.substr(firstSpacePos+1));
+        else if (firstSpacePos != std::string::npos && cmd ==
+                 "/setsenseinterval")
+          setSenseInterval(message.from_id,
+                           message.text.substr(firstSpacePos+1));
         else if (message.text == "/nextsensetime")
           sendNextSenseTime(message.from_id);
-        else if (firstSpacePos != std::string::npos && cmd == "/activatecontrolcondition")
+        else if (firstSpacePos != std::string::npos && cmd ==
+                 "/activatecontrolcondition")
           setControlConditionsStatus(message.from_id, body, true);
-        else if (firstSpacePos != std::string::npos && cmd == "/deactivatecontrolcondition")
+        else if (firstSpacePos != std::string::npos && cmd ==
+                 "/deactivatecontrolcondition")
           setControlConditionsStatus(message.from_id, body, false);
-        else if (firstSpacePos != std::string::npos && cmd == "/setcontrolcondition")
+        else if (firstSpacePos != std::string::npos && cmd ==
+                 "/setcontrolcondition")
           setControlConditions(message.from_id, body);
-        else if (firstSpacePos != std::string::npos && cmd == "/setcontrolinterval")
+        else if (firstSpacePos != std::string::npos && cmd ==
+                 "/setcontrolinterval")
           setControlInterval(message.from_id, body);
-        else if (firstSpacePos != std::string::npos && cmd == "/activatecontrolinterval")
+        else if (firstSpacePos != std::string::npos && cmd ==
+                 "/activatecontrolinterval")
           setControlIntervalStatus(message.from_id, body, true);
-        else if (firstSpacePos != std::string::npos && cmd == "/deactivatecontrolinterval")
+        else if (firstSpacePos != std::string::npos && cmd ==
+                 "/deactivatecontrolinterval")
           setControlIntervalStatus(message.from_id, body, false);
-        else if (firstSpacePos != std::string::npos && cmd == "/controlintervalstatus")
+        else if (firstSpacePos != std::string::npos && cmd ==
+                 "/controlintervalstatus")
           sendControlIntervalStatus(message.from_id, body);
-        else if (firstSpacePos != std::string::npos && cmd == "/nextcontroltime")
+        else if (firstSpacePos != std::string::npos && cmd ==
+                 "/nextcontroltime")
           sendNextControlTime(message.from_id, body);
-        else if (firstSpacePos != std::string::npos && cmd == "/activatecontrol")
+        else if (firstSpacePos != std::string::npos && cmd ==
+                 "/activatecontrol")
           setControlStatus(message.from_id, body, true);
-        else if (firstSpacePos != std::string::npos && cmd == "/deactivatecontrol")
+        else if (firstSpacePos != std::string::npos && cmd ==
+                 "/deactivatecontrol")
           setControlStatus(message.from_id, body, false);
         else if (firstSpacePos != std::string::npos && cmd == "/controlstatus")
           sendControlStatus(message.from_id, body);
-        else if (firstSpacePos != std::string::npos && cmd == "/controlconditionstatus")
+        else if (firstSpacePos != std::string::npos && cmd ==
+                 "/controlconditionstatus")
           sendControlConditionStatus(message.from_id, body);
         else
           bot.sendMessage(message.from_id, "Command unknown");
@@ -126,16 +150,20 @@ void eGardener::execute() {
       checkMessages = false;
     }
     if (checkClock) {
-      Time time = rtc.get(); 
+      Time time = rtc.get();
       periodicSense.execute(time);
       periodicLight.execute(time);
       periodicWater.execute(time);
     }
     if (checkControlCondition) {
-      std::map<char, uint8_t> values{{CONTROL_HUMIDITY_CHAR, trhSensor.senseHumidity()},
-                                     {CONTROL_TEMPERATURE_CHAR, trhSensor.senseTemperature()},
-                                     {CONTROL_LIGHT_CHAR, lightSensor.sense() * 100},
-                                     {CONTROL_MOISTURE_CHAR, moistureSensor.sense() * 100}};
+      std::map<char, uint8_t> values{{CONTROL_HUMIDITY_CHAR,
+                                      trhSensor.senseHumidity()},
+                                     {CONTROL_TEMPERATURE_CHAR,
+                                      trhSensor.senseTemperature()},
+                                     {CONTROL_LIGHT_CHAR,
+                                      lightSensor.sense() * 100},
+                                     {CONTROL_MOISTURE_CHAR,
+                                      moistureSensor.sense() * 100}};
       conditionableWater.execute(values);
       conditionableLight.execute(values);
       checkControlCondition = false;
@@ -150,7 +178,6 @@ void eGardener::execute() {
       if (checkAndSaveNewWiFi())
         checkWiFiConnected = false;
     }
-    // Por ahora, despues con timers y booleans.
   }
 }
 
@@ -171,12 +198,11 @@ void eGardener::activateResetWiFi() {
 }
 
 void eGardener::sendWelcomeMessage(const std::string& user_id) {
-  if (userRegister.isUserRegistered(user_id)) 
+  if (userRegister.isUserRegistered(user_id))
     bot.sendMessage(user_id, "Welcome to eGardener!");
   else
-    bot.sendMessage(user_id, "Welcome to eGardener, you are not registered. Register with /addme followed by the password");
-
-  //HELP
+    bot.sendMessage(user_id, "Welcome to eGardener, you are not registered. " +
+                              "Register with /addme followed by the password");
 }
 
 void eGardener::setPwd(const std::string& user_id, const std::string& body) {
@@ -188,11 +214,12 @@ void eGardener::setPwd(const std::string& user_id, const std::string& body) {
   if (newPwd.find_first_of(' ') != std::string::npos) {
     bot.sendMessage(user_id, "Password must not have spaces");
     return;
-  }
-  else if (userRegister.setPwd(oldPwd, newPwd))
+  } else if (userRegister.setPwd(oldPwd, newPwd)) {
     bot.sendMessage(user_id, "Password set succesfully");
-  else {
-    bot.sendMessage(user_id, "Old password is incorrect or new password is longer than " + to_string(MAX_PWD_USER_LENGTH));
+  } else {
+    bot.sendMessage(user_id,
+                    "Old password is incorrect or new password is longer than" +
+                    to_string(MAX_PWD_USER_LENGTH));
     return;
   }
 
@@ -212,22 +239,23 @@ void eGardener::addUser(const std::string& user_id, const std::string& body) {
   if (result == 2) {
     bot.sendMessage(user_id, "Wrong password");
     return;
-  }
-  else if (result == 3) {
+  } else if (result == 3) {
     bot.sendMessage(user_id, "Cannot save more users");
     return;
   }
 
   bot.sendMessage(user_id, "You were succesfully added");
 
-  // save.
   auto users = userRegister.getUsers();
 
   auto address = memoryDist.find("ur")->second;
   eeprom.write(address.first, true);
-  eeprom.write(address.first + sizeof(bool) + MAX_PWD_USER_LENGTH + 1, users.size());
+  eeprom.write(address.first + sizeof(bool) +
+               MAX_PWD_USER_LENGTH + 1, users.size());
   for (int i = 0; i < users.size(); i++) {
-    eeprom.write(address.first + sizeof(bool) + MAX_PWD_USER_LENGTH + 1 + sizeof(uint8_t) + sizeof(uint32_t) * i, users[i]);
+    eeprom.write(address.first + sizeof(bool)
+                 + MAX_PWD_USER_LENGTH + 1 + sizeof(uint8_t)
+                 + sizeof(uint32_t) * i, users[i]);
   }
 }
 
@@ -236,31 +264,32 @@ void eGardener::removeUser(const std::string& user_id) {
     return;
 
   bot.sendMessage(user_id, "You were succesfully removed");
-  
+
   auto users = userRegister.getUsers();
 
   auto address = memoryDist.find("ur")->second;
   eeprom.write(address.first, true);
-  eeprom.write(address.first + sizeof(bool) + MAX_PWD_USER_LENGTH + 1, users.size());
+  eeprom.write(address.first + sizeof(bool) +
+               MAX_PWD_USER_LENGTH + 1, users.size());
   for (int i = 0; i < users.size(); i++) {
-    eeprom.write(address.first + sizeof(bool) + MAX_PWD_USER_LENGTH + 1 + sizeof(uint8_t) + sizeof(uint32_t) * i, users[i]);
+    eeprom.write(address.first + sizeof(bool) +
+                 MAX_PWD_USER_LENGTH + 1 + sizeof(uint8_t) +
+                 sizeof(uint32_t) * i, users[i]);
   }
 }
 
 void eGardener::sendTemperature(const std::string& user_id) {
   Time time = rtc.get();
-  bot.sendMessage(user_id, "[" + time.formatTime() + " " + time.formatDate() + "] " +
-                  TEMPERATURE_EMOJI + (" " + 
-                  floatToString(trhSensor.senseTemperature(), 2)) + 
-                  "°C");
+  bot.sendMessage(user_id, "[" + time.formatTime() + " " +
+                  time.formatDate() + "] " + TEMPERATURE_EMOJI + (" " +
+                  floatToString(trhSensor.senseTemperature(), 2)) + "°C");
 }
 
 void eGardener::sendHumidity(const std::string& user_id) {
   Time time = rtc.get();
-  bot.sendMessage(user_id, "[" + time.formatTime() + " " + time.formatDate() + "] " +
-                  HUMIDITY_EMOJI + (" " + 
-                  floatToString(trhSensor.senseHumidity(), 2)) + 
-                  "%");
+  bot.sendMessage(user_id, "[" + time.formatTime() + " " +
+                  time.formatDate() + "] " + HUMIDITY_EMOJI + (" " +
+                  floatToString(trhSensor.senseHumidity(), 2)) + "%");
 }
 
 void eGardener::sendMoisture(const std::string& user_id) {
@@ -271,8 +300,8 @@ void eGardener::sendMoisture(const std::string& user_id) {
                     R"(You need to calibrate moisture sensor with )" +
                     std::string(R"(/calibratemoisturesensor)"));
   else
-    bot.sendMessage(user_id, "[" + time.formatTime() + " " + time.formatDate() + "] " +
-                    MOISTURE_EMOJI + (" " + 
+    bot.sendMessage(user_id, "[" + time.formatTime() + " " +
+                    time.formatDate() + "] " + MOISTURE_EMOJI + (" " +
                     floatToString(value * 100, 2)) + "%");
 }
 
@@ -284,8 +313,8 @@ void eGardener::sendLight(const std::string& user_id) {
                     R"(You need to calibrate light sensor with )" +
                     std::string(R"(/calibratelightsensor)"));
   else
-    bot.sendMessage(user_id, "[" + time.formatTime() + " " + time.formatDate() + "] " +
-                    LIGHT_EMOJI + (" " + 
+    bot.sendMessage(user_id, "[" + time.formatTime() + " " +
+                    time.formatDate() + "] " + LIGHT_EMOJI + (" " +
                     floatToString(value * 100, 2)) + "%");
 }
 
@@ -294,33 +323,33 @@ void eGardener::sendSenseAll(const std::string& user_id) {
   float valueMoisture = moistureSensor.sense();
   if (valueLight < 0) {
     bot.sendMessage(user_id,
-                    R"(You need to calibrate light sensor with )" +
-                    std::string(R"(/calibratelightsensor)"));
+                    "You need to calibrate light sensor with " +
+                    std::string("/calibratelightsensor"));
   } else if (valueMoisture < 0) {
     bot.sendMessage(user_id,
                 R"(You need to calibrate moisture sensor with )" +
                     std::string(R"(/calibratemoisturesensor)"));
   } else {
     Time time = rtc.get();
-    std::string messageTime = "[" + time.formatTime() + " " + time.formatDate() + "]";
+    std::string messageTime = "[" + time.formatTime() + " " +
+                              time.formatDate() + "]";
     std::string temp = TEMPERATURE_EMOJI + (" " +
-                  floatToString(trhSensor.senseTemperature(), 2)) + 
-                  "°C";
+                  floatToString(trhSensor.senseTemperature(), 2)) + "°C";
     std::string moisture = MOISTURE_EMOJI + (" " +
                   floatToString(valueMoisture * 100, 2)) + "%";
-    std::string humidity = HUMIDITY_EMOJI + (" " + 
-                  floatToString(trhSensor.senseHumidity(), 2)) + 
-                  "% ";
+    std::string humidity = HUMIDITY_EMOJI + (" " +
+                  floatToString(trhSensor.senseHumidity(), 2)) + "% ";
     std::string light = LIGHT_EMOJI + (" " +
                   floatToString(valueLight * 100, 2)) + "%";
-    bot.sendMessage(user_id, messageTime + "\n" + temp + "\n" + moisture + "\n" + humidity + "\n" + light);
+    bot.sendMessage(user_id, messageTime + "\n" + temp + "\n" + moisture + "\n"
+                    + humidity + "\n" + light);
   }
 }
 
 void eGardener::calibrateLightSensor(const std::string& user_id) {
   float min, max;
 
-  bot.sendMessage(user_id, R"(Put direct light on the sensor )" + 
+  bot.sendMessage(user_id, R"(Put direct light on the sensor )" +
                            std::string(R"(with your phone flash and type ok)")
                            + R"( (any other text to cancel).)");
   if (getTelegramResponseForInteraction() != "ok") {
@@ -351,14 +380,18 @@ void eGardener::calibrateLightSensor(const std::string& user_id) {
 void eGardener::calibrateMoistureSensor(const std::string& user_id) {
   float min, max;
 
-  bot.sendMessage(user_id, "Keep your moisture sensor in the air and type ok (any other text to cancel)");
+  bot.sendMessage(user_id, "Keep your moisture sensor in the air" +
+                           "and type ok (any other text to cancel)");
   if (getTelegramResponseForInteraction() != "ok") {
     bot.sendMessage(user_id, "Operation cancelled");
     return;
   }
   min = moistureSensor.sense(true);
 
-  bot.sendMessage(user_id, "Put your moisture sensor in a glass with water (IMPORTANT: leave half a centimetre below the line), wait at least 20 seconds and type ok (any other text to cancel)");
+  bot.sendMessage(user_id, "Put your moisture sensor in a glass with water " +
+                           "(IMPORTANT: leave half a centimetre below the " +
+                           "line), wait at least 20 seconds and type ok" +
+                           " (any other text to cancel)");
   if (getTelegramResponseForInteraction() != "ok") {
               bot.sendMessage(user_id, "Operation cancelled");
     return;
@@ -376,15 +409,15 @@ void eGardener::calibrateMoistureSensor(const std::string& user_id) {
   }
 }
 
-void eGardener::setSenseIntervalActivated(const std::string& user_id, bool activated) {
+void eGardener::setSenseIntervalActivated(const std::string& user_id,
+                                          bool activated) {
   periodicSense.setActivatedStatus(activated);
 
   auto address = memoryDist.find("st")->second;
   eeprom.write(address.first, true);
   eeprom.write(address.first + sizeof(bool), activated);
-  
+
   std::string state = (activated ? "activated" : "deactivated");
-  
 
   bot.sendMessage(user_id, "Sense interval has been " + state);
 }
@@ -392,62 +425,69 @@ void eGardener::setSenseIntervalActivated(const std::string& user_id, bool activ
 void eGardener::sendSenseIntervalStatus(const std::string& user_id) {
   std::string state = periodicSense.isActivated() ? "activated" : "deactivated";
   bot.sendMessage(user_id, "Sense interval is " + state +
-                  "\nSense interval is " + to_string(periodicSense.getInterval()) +
+                  "\nSense interval is " +
+                  to_string(periodicSense.getInterval()) +
                   periodicSense.getIntervalUnit());
 }
 
 void eGardener::sendNextSenseTime(const std::string& user_id) {
-  bot.sendMessage(user_id, "Next sense at " + periodicSense.getNextTime().formatTime()
-                          + " " + periodicSense.getNextTime().formatDate());
+  bot.sendMessage(user_id, "Next sense at " +
+                          periodicSense.getNextTime().formatTime() + " " +
+                          periodicSense.getNextTime().formatDate());
 }
 
-void eGardener::sendNextControlTime(const std::string& user_id, const std::string& body) {
+void eGardener::sendNextControlTime(const std::string& user_id,
+                                    const std::string& body) {
   PeriodicAction * control;
 
-  if (body[0] == 'w')
+  if (body[0] == 'w') {
     control = &periodicWater;
-  else if (body[0] == 'l')
+  } else if (body[0] == 'l') {
     control = &periodicLight;
-  else {
+  } else {
     bot.sendMessage(user_id, "Control selected unknown");
     return;
   }
 
-  bot.sendMessage(user_id, "Next sense at " + control->getNextTime().formatTime()
-                          + " " + control->getNextTime().formatDate());
+  bot.sendMessage(user_id, "Next sense at " +
+                           control->getNextTime().formatTime()
+                           + " " + control->getNextTime().formatDate());
 }
 
-void eGardener::sendControlIntervalStatus(const std::string& user_id, const std::string& body) {
+void eGardener::sendControlIntervalStatus(const std::string& user_id,
+                                          const std::string& body) {
   PeriodicAction * control;
 
-  if (body[0] == 'w')
+  if (body[0] == 'w') {
     control = &periodicWater;
-  else if (body[0] == 'l')
+  } else if (body[0] == 'l') {
     control = &periodicLight;
-  else {
+  } else {
     bot.sendMessage(user_id, "Control selected unknown");
     return;
   }
 
   std::string state = control->isActivated() ? "activated" : "deactivated";
-  bot.sendMessage(user_id, std::string("Control interval ") + body[0] + " is " + state +
-                  "\nControl interval is " + to_string(control->getInterval()) +
-                  control->getIntervalUnit() + " with duration " + to_string(control->getDuration()) + control->getDurationUnit());
+  bot.sendMessage(user_id, std::string("Control interval ") + body[0] + " is "
+                  + state + "\nControl interval is " +
+                  to_string(control->getInterval()) +
+                  control->getIntervalUnit() + " with duration " +
+                  to_string(control->getDuration()) +
+                  control->getDurationUnit());
 }
 
-void eGardener::sendControlStatus(const std::string& user_id, const std::string& body) {
+void eGardener::sendControlStatus(const std::string& user_id,
+                                  const std::string& body) {
   Control * control;
   bool manually;
 
   if (body[0] == 'w') {
     control = &controlWater;
     manually = controlWaterManually;
-  }
-  else if (body[0] == 'l') {
+  } else if (body[0] == 'l') {
     control = &controlLight;
     manually = controlLightManually;
-  }
-  else {
+  } else {
     bot.sendMessage(user_id, "Control selected unknown");
     return;
   }
@@ -457,17 +497,15 @@ void eGardener::sendControlStatus(const std::string& user_id, const std::string&
                   + ((manually) ? " (manually)" : ""));
 }
 
-void eGardener::sendControlConditionStatus(const std::string& user_id, const std::string& body) {
+void eGardener::sendControlConditionStatus(const std::string& user_id,
+                                           const std::string& body) {
   ConditionableAction * control;
 
   if (body[0] == 'w') {
     control = &conditionableWater;
-  }
-  else if (body[0] == 'l') {
+  } else if (body[0] == 'l') {
     control = &conditionableLight;
-
-  }
-  else {
+  } else {
     bot.sendMessage(user_id, "Control selected unknown");
     return;
   }
@@ -476,24 +514,29 @@ void eGardener::sendControlConditionStatus(const std::string& user_id, const std
   auto conditions = control->getConditions();
 
   for (auto it = conditions.begin(); it != conditions.end(); it++) {
-    conditionsStr += it->first + std::string(" ") + ((it->second.first == ConditionableAction::Symbol::GREAT) ? GREAT_CHAR : LESS_CHAR);
+    conditionsStr += it->first + std::string(" ") +
+                     ((it->second.first == ConditionableAction::Symbol::GREAT)
+                    ? GREAT_CHAR : LESS_CHAR);
     conditionsStr += " " + to_string(it->second.second) + "\n";
   }
 
   std::string state = control->isActivated() ? "activated" : "deactivated";
-  bot.sendMessage(user_id, std::string("Control condition ") + body[0] + " is " + state +
-                  "\nConditions are\n" + conditionsStr);
+  bot.sendMessage(user_id, std::string("Control condition ") + body[0] + " is "
+                  + state + "\nConditions are\n" + conditionsStr);
 }
 
-void eGardener::setSenseInterval(const std::string& user_id, const std::string& body) {
+void eGardener::setSenseInterval(const std::string& user_id,
+                                 const std::string& body) {
   // Crear macros
   if (periodicSense.setInterval(body, rtc.get())) {
     auto address = memoryDist.find("st")->second;
     eeprom.write(address.first, true);
     eeprom.write(address.first + sizeof(bool) * 2, periodicSense.getInterval());
-    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t), periodicSense.getIntervalUnit());
+    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t),
+                 periodicSense.getIntervalUnit());
 
-    bot.sendMessage(user_id, "Sense interval set " + std::to_string(periodicSense.getInterval())
+    bot.sendMessage(user_id, "Sense interval set " +
+                                     std::to_string(periodicSense.getInterval())
                                      + periodicSense.getIntervalUnit());
   } else {
     bot.sendMessage(user_id, "El intervalo o la unidad no son correctos");
@@ -505,9 +548,7 @@ void eGardener::setup() {
   printf("Loading data from EEPROM...\n");
   setupMemoryDist();
   bool there;
-  // leo wifi.
   auto address = memoryDist.find("wifi")->second;
-  // validar que lo encuentre?
   eeprom.read(address.first, there);
   if (there) {
     eeprom.read(address.first + sizeof(bool), wifiSsid);
@@ -522,9 +563,9 @@ void eGardener::setup() {
     eeprom.read(address.first + sizeof(bool) + sizeof(float), ls_min);
     lightSensor.setMaxAndMin(ls_max, ls_min);
   }
-  
+
   address = memoryDist.find("st")->second;
-  
+
   eeprom.read(address.first, there);
   if (there) {
     uint8_t interval;
@@ -532,11 +573,12 @@ void eGardener::setup() {
     bool activated;
     eeprom.read(address.first + sizeof(bool), activated);
     eeprom.read(address.first + sizeof(bool) * 2, interval);
-    eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t), intervalUnit);
+    eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t),
+                intervalUnit);
     periodicSense.setActivatedStatus(activated);
     periodicSense.setInterval(interval, intervalUnit, rtc.get());
   }
-  
+
   address = memoryDist.find("ctw")->second;
 
   eeprom.read(address.first, there);
@@ -546,9 +588,12 @@ void eGardener::setup() {
     bool activated;
     eeprom.read(address.first + sizeof(bool), activated);
     eeprom.read(address.first + sizeof(bool) * 2, interval);
-    eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t), intervalUnit);
-    eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char), duration);
-    eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) * 2 + sizeof(char), durationUnit);
+    eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t),
+                intervalUnit);
+    eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) +
+                sizeof(char), duration);
+    eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) * 2 +
+                sizeof(char), durationUnit);
     periodicWater.setActivatedStatus(activated);
     periodicWater.setInterval(interval, intervalUnit, rtc.get());
     periodicWater.setDuration(duration, durationUnit);
@@ -563,9 +608,12 @@ void eGardener::setup() {
     bool activated;
     eeprom.read(address.first + sizeof(bool), activated);
     eeprom.read(address.first + sizeof(bool) * 2, interval);
-    eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t), intervalUnit);
-    eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char), duration);
-    eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) * 2 + sizeof(char), durationUnit);
+    eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t),
+                intervalUnit);
+    eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) +
+                sizeof(char), duration);
+    eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) * 2 +
+                sizeof(char), durationUnit);
     periodicLight.setActivatedStatus(activated);
     periodicLight.setInterval(interval, intervalUnit, rtc.get());
     periodicLight.setDuration(duration, durationUnit);
@@ -584,11 +632,16 @@ void eGardener::setup() {
     for (uint8_t i = 0; i < amount; i++) {
       char variable;
       uint8_t symbol, value;
-      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + pos_accum, variable);
-      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + pos_accum, symbol);
-      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + pos_accum, value);
+      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) +
+                  pos_accum, variable);
+      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) +
+                  sizeof(char) + pos_accum, symbol);
+      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) +
+                  sizeof(char) + sizeof(uint8_t) + pos_accum, value);
       pos_accum += sizeof(char) + sizeof(uint8_t) * 2;
-      conditions.insert(std::make_pair(variable, ConditionableAction::ConditionPair((ConditionableAction::Symbol) symbol, value)));
+      conditions.insert(std::make_pair(variable,
+                        ConditionableAction::ConditionPair
+                        ((ConditionableAction::Symbol) symbol, value)));
     }
     conditionableWater.setConditions(conditions);
   }
@@ -605,11 +658,16 @@ void eGardener::setup() {
     for (uint8_t i = 0; i < amount; i++) {
       char variable;
       uint8_t symbol, value;
-      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + pos_accum, variable);
-      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + pos_accum, symbol);
-      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + pos_accum, value);
+      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) +
+                  pos_accum, variable);
+      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) +
+                  sizeof(char) + pos_accum, symbol);
+      eeprom.read(address.first + sizeof(bool) * 2 + sizeof(uint8_t) +
+                  sizeof(char) + sizeof(uint8_t) + pos_accum, value);
       pos_accum += sizeof(char) + sizeof(uint8_t) * 2;
-      conditions.insert(std::make_pair(variable, ConditionableAction::ConditionPair((ConditionableAction::Symbol) symbol, value)));
+      conditions.insert(std::make_pair(variable,
+                        ConditionableAction::ConditionPair
+                        ((ConditionableAction::Symbol) symbol, value)));
     }
     conditionableLight.setConditions(conditions);
   }
@@ -632,10 +690,12 @@ void eGardener::setup() {
     eeprom.read(address.first + sizeof(bool), pwd);
     printf("Password: %s\n", pwd.c_str());
     userRegister.setPwd("", pwd);
-    eeprom.read(address.first + sizeof(bool) + MAX_PWD_USER_LENGTH + 1, usersSize);
+    eeprom.read(address.first + sizeof(bool) + MAX_PWD_USER_LENGTH + 1,
+                usersSize);
     for (int i = 0; i < usersSize; i++) {
       uint32_t user;
-      eeprom.read(address.first + sizeof(bool) + MAX_PWD_USER_LENGTH + 1 + sizeof(uint8_t) + sizeof(uint32_t) * i, user);
+      eeprom.read(address.first + sizeof(bool) + MAX_PWD_USER_LENGTH + 1
+                  + sizeof(uint8_t) + sizeof(uint32_t) * i, user);
       userRegister.addUser(user, pwd);
     }
   }
@@ -650,10 +710,10 @@ void eGardener::setup() {
                 TELEGRAM_POLL_TIME);
   tickerCheckClock.attach(callback(this, &eGardener::activateCheckClock),
                 CLOCK_POLL_TIME);
-  tickerCheckControlCondition.attach(callback(this, &eGardener::activateCheckControlCondition),
+  tickerCheckControlCondition.attach(callback(this,
+                                    &eGardener::activateCheckControlCondition),
                 CONTROL_CONDITION_POLL_TIME);
   interruptResetWiFi.rise(callback(this, &eGardener::activateResetWiFi));
-  
 
   printf("Ready!\n");
 }
@@ -721,42 +781,52 @@ void eGardener::setupMemoryDist() {
 
   memoryDist.insert(std::pair<std::string, std::pair<uint16_t, uint8_t>>
                     ("ctw", std::pair<uint16_t, uint8_t>(position,
-                    sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + sizeof(char))));
-  position += sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + sizeof(char);
+                    sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) +
+                    sizeof(uint8_t) + sizeof(char))));
+  position += sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) +
+              sizeof(uint8_t) +sizeof(char);
 
   memoryDist.insert(std::pair<std::string, std::pair<uint16_t, uint8_t>>
                     ("ctl", std::pair<uint16_t, uint8_t>(position,
-                    sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + sizeof(char))));
-  position += sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + sizeof(char);
+                    sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) +
+                    sizeof(uint8_t) + sizeof(char))));
+  position += sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) +
+              (uint8_t) + sizeof(char);
 
   memoryDist.insert(std::make_pair("ccw", std::make_pair(position,
-                    sizeof(bool) * 2 + sizeof(uint8_t) + (sizeof(char) + sizeof(uint8_t) * 2) * 4)));
-  position += sizeof(bool) * 2 + sizeof(uint8_t) + (sizeof(char) + sizeof(uint8_t) * 2) * 4;
+                    sizeof(bool) * 2 + sizeof(uint8_t) + (sizeof(char) +
+                    sizeof(uint8_t) * 2) * 4)));
+  position += sizeof(bool) * 2 + sizeof(uint8_t) + (sizeof(char) +
+              sizeof(uint8_t) * 2) * 4;
 
   memoryDist.insert(std::make_pair("ccl", std::make_pair(position,
-                    sizeof(bool) * 2 + sizeof(uint8_t) + (sizeof(char) + sizeof(uint8_t) * 2) * 4)));
-  position += sizeof(bool) * 2 + sizeof(uint8_t) + (sizeof(char) + sizeof(uint8_t) * 2) * 4;
+                    sizeof(bool) * 2 + sizeof(uint8_t) + (sizeof(char) +
+                    sizeof(uint8_t) * 2) * 4)));
+  position += sizeof(bool) * 2 + sizeof(uint8_t) + (sizeof(char) +
+              sizeof(uint8_t) * 2) * 4;
 
-  memoryDist.insert(std::make_pair("ur", std::make_pair(position + 10, sizeof(bool) + MAX_PWD_USER_LENGTH + 1
-                                                       + sizeof(uint8_t) + sizeof(uint32_t) * MAX_NUMBER_USERS)));
-  position += 10 + sizeof(bool) + MAX_PWD_USER_LENGTH + 1 + sizeof(uint8_t) + sizeof(uint32_t) * MAX_NUMBER_USERS;
+  memoryDist.insert(std::make_pair("ur", std::make_pair(position + 10,
+                    sizeof(bool)+ MAX_PWD_USER_LENGTH + 1
+                    + sizeof(uint8_t) + sizeof(uint32_t) * MAX_NUMBER_USERS)));
+  position += 10 + sizeof(bool) + MAX_PWD_USER_LENGTH + 1 + sizeof(uint8_t)
+              + sizeof(uint32_t) * MAX_NUMBER_USERS;
 
   memoryDist.insert(std::pair<std::string, std::pair<uint16_t, uint8_t>>
                     ("ms", std::pair<uint16_t, uint8_t>(position,
                      sizeof(bool) + sizeof(float) * 2)));
   position += sizeof(bool) + sizeof(float) * 2;
-                                                    
 }
 
 
-void eGardener::setControlConditions(const std::string& user_id, const std::string& body) {
+void eGardener::setControlConditions(const std::string& user_id,
+                                     const std::string& body) {
   ConditionableAction * conditionable;
 
-  if (body[0] == 'w')
+  if (body[0] == 'w') {
     conditionable = &conditionableWater;
-  else if (body[0] == 'l')
+  } else if (body[0] == 'l') {
     conditionable = &conditionableLight;
-  else {
+  } else {
     bot.sendMessage(user_id, "Control selected unknown");
     return;
   }
@@ -765,7 +835,7 @@ void eGardener::setControlConditions(const std::string& user_id, const std::stri
     bot.sendMessage(user_id, "Conditions are not correct");
     return;
   }
-    
+
   auto address = memoryDist.find(std::string("cc") + body[0])->second;
   eeprom.write(address.first, true);
 
@@ -774,26 +844,31 @@ void eGardener::setControlConditions(const std::string& user_id, const std::stri
   uint16_t pos_accum = 0;
 
   for (auto it = conditions.begin(); it != conditions.end(); it++) {
-    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + pos_accum, it->first);
-    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + pos_accum, it->second.first);
-    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + pos_accum, it->second.second);
+    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t) +
+                 pos_accum, it->first);
+    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t) +
+                 sizeof(char) + pos_accum, it->second.first);
+    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t) +
+                 sizeof(char) + sizeof(uint8_t) + pos_accum, it->second.second);
     pos_accum += sizeof(char) + sizeof(uint8_t) * 2;
     counter++;
   }
 
   eeprom.write(address.first + sizeof(bool) * 2, counter);
 
-  bot.sendMessage(user_id, "Control conditions for " + (body[0] + std::string(" set succesfully")));
+  bot.sendMessage(user_id, "Control conditions for " + (body[0] +
+                  std::string(" set succesfully")));
 }
 
-void eGardener::setControlInterval(const std::string& user_id, const std::string& body) {
+void eGardener::setControlInterval(const std::string& user_id,
+                                   const std::string& body) {
   PeriodicAction * control;
 
-  if (body[0] == 'w')
+  if (body[0] == 'w') {
     control = &periodicWater;
-  else if (body[0] == 'l')
+  } else if (body[0] == 'l') {
     control = &periodicLight;
-  else {
+  } else {
     bot.sendMessage(user_id, "Control selected unknown");
     return;
   }
@@ -802,26 +877,32 @@ void eGardener::setControlInterval(const std::string& user_id, const std::string
     auto address = memoryDist.find(std::string("ct") + body[0])->second;
     eeprom.write(address.first, true);
     eeprom.write(address.first + sizeof(bool) * 2, control->getInterval());
-    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t), control->getIntervalUnit());
-    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char), control->getDuration());
-    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t) * 2 + sizeof(char), control->getDurationUnit());
-    bot.sendMessage(user_id, (std::string("Control interval ") + body[0]) + " set interval " + std::to_string(control->getInterval())
-                                          + control->getIntervalUnit() + " duration " +
-                                          std::to_string(control->getDuration())
-                                          + control->getDurationUnit());
+    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t),
+                 control->getIntervalUnit());
+    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t) +
+                 sizeof(char), control->getDuration());
+    eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t) * 2 +
+                 sizeof(char), control->getDurationUnit());
+    bot.sendMessage(user_id, (std::string("Control interval ") + body[0]) +
+                    " set interval " + std::to_string(control->getInterval())
+                    + control->getIntervalUnit() + " duration " +
+                    std::to_string(control->getDuration())
+                    + control->getDurationUnit());
   } else {
     bot.sendMessage(user_id, "Time or unit are not correct");
   }
 }
 
-void eGardener::setControlIntervalStatus(const std::string& user_id, const std::string& body, bool activated) {
+void eGardener::setControlIntervalStatus(const std::string& user_id,
+                                         const std::string& body,
+                                         bool activated) {
   PeriodicAction * control;
 
-  if (body[0] == 'w')
+  if (body[0] == 'w') {
     control = &periodicWater;
-  else if (body[0] == 'l')
+  } else if (body[0] == 'l') {
     control = &periodicLight;
-  else {
+  } else {
     bot.sendMessage(user_id, "Control selected unknown");
     return;
   }
@@ -829,17 +910,20 @@ void eGardener::setControlIntervalStatus(const std::string& user_id, const std::
   auto address = memoryDist.find(std::string("ct") + body[0])->second;
   eeprom.write(address.first, true);
   eeprom.write(address.first + sizeof(bool), activated);
-  bot.sendMessage(user_id, (std::string("Control interval ") + body[0]) + " " + ((activated) ? "activated" : "deactivated"));
+  bot.sendMessage(user_id, (std::string("Control interval ") + body[0]) +
+                  " " + ((activated) ? "activated" : "deactivated"));
 }
 
-void eGardener::setControlConditionsStatus(const std::string& user_id, const std::string& body, bool activated) {
+void eGardener::setControlConditionsStatus(const std::string& user_id,
+                                           const std::string& body,
+                                           bool activated) {
   ConditionableAction * conditionable;
 
-  if (body[0] == 'w')
+  if (body[0] == 'w') {
     conditionable = &conditionableWater;
-  else if (body[0] == 'l')
+  } else if (body[0] == 'l') {
     conditionable = &conditionableLight;
-  else {
+  } else {
     bot.sendMessage(user_id, "Control selected unknown");
     return;
   }
@@ -848,24 +932,27 @@ void eGardener::setControlConditionsStatus(const std::string& user_id, const std
   auto address = memoryDist.find(std::string("cc") + body[0])->second;
   eeprom.write(address.first, true);
   eeprom.write(address.first + sizeof(bool), activated);
-  bot.sendMessage(user_id, (std::string("Control conditions ") + body[0]) + " " + ((activated) ? "activated" : "deactivated"));
+  bot.sendMessage(user_id, (std::string("Control conditions ") +
+                  body[0]) + " " +
+                  ((activated) ? "activated" : "deactivated"));
 }
 
-void eGardener::setControlStatus(const std::string& user_id, const std::string& body, bool activated) {
+void eGardener::setControlStatus(const std::string& user_id,
+                                 const std::string& body,
+                                 bool activated) {
   if (body[0] == 'w') {
     (activated) ? controlWater.activate() : controlWater.deactivate();
     controlWaterManually = activated;
-  }
-  else if (body[0] == 'l') {
+  } else if (body[0] == 'l') {
     (activated) ? controlLight.activate() : controlLight.deactivate();
     controlLightManually = activated;
-  }
-  else {
+  } else {
     bot.sendMessage(user_id, "Control selected unknown");
     return;
   }
 
-  bot.sendMessage(user_id, (std::string("Control ") + body[0]) + " " + ((activated) ? "activated" : "deactivated"));
+  bot.sendMessage(user_id, (std::string("Control ") + body[0]) + " " +
+                  ((activated) ? "activated" : "deactivated"));
 }
 
 void eGardener::resetWiFi() {
@@ -903,6 +990,4 @@ void eGardener::activate() {
   }
 }
 
-void eGardener::deactivate() {
-  
-}
+void eGardener::deactivate() {}

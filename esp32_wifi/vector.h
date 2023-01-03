@@ -28,7 +28,6 @@ template <class T>
 Vector<T>::Vector(size_t size) {
   this->size = size;
   vector = new T[size];
-  // No valido que haya lugar.
 }
 
 template <class T>

@@ -1,3 +1,6 @@
+// Copyright 2022 Matías Charrut
+// This code is licensed under MIT license (see LICENSE for details)
+
 #ifndef MODULES_ACTIVABLE_ACTION_ACTIVABLE_ACTION_H_
 #define MODULES_ACTIVABLE_ACTION_ACTIVABLE_ACTION_H_
 

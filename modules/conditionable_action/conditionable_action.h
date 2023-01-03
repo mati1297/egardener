@@ -1,7 +1,11 @@
+// Copyright 2022 Matías Charrut
+// This code is licensed under MIT license (see LICENSE for details)
+
 #ifndef MODULES_CONDITIONABLE_ACTION_CONDITIONABLE_ACTION_H_
 #define MODULES_CONDITIONABLE_ACTION_CONDITIONABLE_ACTION_H_
 
 #include <map>
+#include <utility>
 #include <vector>
 #include <string>
 #include "mbed.h"
@@ -17,7 +21,7 @@
 // Represents actions that execute when conditions are fullfiled
 class ConditionableAction {
  public:
-   enum Symbol {
+    enum Symbol {
     NOTHING,
     GREAT,
     LESS
@@ -28,7 +32,7 @@ class ConditionableAction {
  private:
   ActivableAction& action;
   bool activated;
-  
+
   std::map<char, ConditionPair> conditions;
   std::vector<char> variables;
 

@@ -16,7 +16,7 @@ class Control : public ActivableAction {
   uint8_t counter;
 
  public:
-  Control(PinName);
+  explicit Control(PinName);
 
   // Activates control
   void activate();

@@ -1,3 +1,6 @@
+// Copyright 2022 Matías Charrut
+// This code is licensed under MIT license (see LICENSE for details)
+
 #ifndef MODULES_USER_REGISTER_USER_REGISTER_H_
 #define MODULES_USER_REGISTER_USER_REGISTER_H_
 
@@ -49,7 +52,5 @@ class UserRegister {
   // Returns users in vector
   void getUsers(std::vector<std::string>&);
 };
-
-
 
 #endif  // MODULES_USER_REGISTER_USER_REGISTER_H_

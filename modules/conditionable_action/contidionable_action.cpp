@@ -1,3 +1,6 @@
+// Copyright 2022 Matías Charrut
+// This code is licensed under MIT license (see LICENSE for details)
+
 #include <algorithm>
 #include <map>
 #include <vector>
@@ -7,8 +10,12 @@
 #include "clock.h"
 #include "conditionable_action.h"
 
-ConditionableAction::ConditionableAction(ActivableAction& action, std::vector<char> variables, bool activated):
-                                        action(action), activated(), conditions(), variables(variables), executing(false) {}
+ConditionableAction::ConditionableAction(ActivableAction& action,
+                                        std::vector<char> variables,
+                                        bool activated):
+                                        action(action), activated(),
+                                        conditions(), variables(variables),
+                                        executing(false) {}
 
 bool ConditionableAction::setConditions(const std::string& conditions) {
   char parameter = 0;
@@ -49,7 +56,9 @@ bool ConditionableAction::setConditions(const std::string& conditions) {
       if (*endptr || *endptr == '.' || valueLong > 255)
         return false;
       value = valueLong;
-      result.insert(std::pair<char, ConditionPair>(parameter, ConditionPair(symbol, value)));
+      result.insert(std::pair<char, ConditionPair>(parameter,
+                                                  ConditionPair(symbol,
+                                                  value)));
       valueString.erase();
       parameter = 0;
       symbol = Symbol::NOTHING;
@@ -66,25 +75,30 @@ bool ConditionableAction::setConditions(const std::string& conditions) {
   return true;
 }
 
-bool ConditionableAction::setConditions(const std::map<char, ConditionPair>& conditions) {
+bool ConditionableAction::setConditions(const std::map<char, ConditionPair>&
+                                        conditions) {
   for (auto it = conditions.begin(); it != conditions.end(); it++) {
-    if (std::find(variables.begin(), variables.end(), it->first) == variables.end())
+    if (std::find(variables.begin(), variables.end(),
+                  it->first) == variables.end())
       return false;
   }
   this->conditions = conditions;
   return true;
 }
 
-bool ConditionableAction::checkConditions(const std::map<char, uint8_t>& values) {
+bool ConditionableAction::checkConditions(
+                          const std::map<char, uint8_t>& values) {
   for (auto it = conditions.begin(); it != conditions.end(); it++) {
     auto values_it = values.find(it->first);
 
     if (values_it == values.end())
       return false;
 
-    if (it->second.first == Symbol::LESS && values_it->second > it->second.second)
+    if (it->second.first == Symbol::LESS &&
+        values_it->second > it->second.second)
       return false;
-    if (it->second.first == Symbol::GREAT && values_it->second < it->second.second)
+    if (it->second.first == Symbol::GREAT &&
+        values_it->second < it->second.second)
       return false;
   }
 
@@ -124,6 +138,7 @@ bool ConditionableAction::isActivated() {
   return activated;
 }
 
-const std::map<char, ConditionableAction::ConditionPair>& ConditionableAction::getConditions() {
+const std::map<char, ConditionableAction::ConditionPair>&
+  ConditionableAction::getConditions() {
   return conditions;
 }

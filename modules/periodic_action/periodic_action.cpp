@@ -1,13 +1,22 @@
+// Copyright 2022 Matías Charrut
+// This code is licensed under MIT license (see LICENSE for details)
+
+#include <string>
 #include "mbed.h"
 #include "activable_action.h"
 #include "clock.h"
 #include "periodic_action.h"
 
 
-PeriodicAction::PeriodicAction(ActivableAction& action, bool activated, bool instant, uint8_t interval, char intervalUnit,
-               uint8_t duration, char durationUnit): action(action), activated(activated), instant(instant),
-               interval(interval), duration(duration), intervalUnit(intervalUnit), durationUnit(durationUnit),
-               executing(false) {}
+PeriodicAction::PeriodicAction(ActivableAction& action, bool activated,
+                               bool instant, uint8_t interval,
+                               char intervalUnit, uint8_t duration,
+                               char durationUnit): action(action),
+                               activated(activated), instant(instant),
+                               interval(interval), duration(duration),
+                               intervalUnit(intervalUnit),
+                               durationUnit(durationUnit),
+                               executing(false) {}
 
 bool PeriodicAction::validateTimeAndUnit(uint8_t time, char unit) {
   return ((time < 60 && time >= 10 && unit == 's') ||
@@ -22,9 +31,9 @@ void PeriodicAction::execute(const Time& now) {
 
   if (!executing) {
     action.activate();
-    if (instant)
+    if (instant) {
       calculateAndSetNextTargetTime(now);
-    else {
+    } else {
       calculateAndSetNextTargetTime(now, false);
       executing = true;
     }
@@ -41,7 +50,8 @@ void PeriodicAction::stop() {
   executing = false;
 }
 
-void PeriodicAction::calculateAndSetNextTargetTime(const Time& now, bool by_interval) {
+void PeriodicAction::calculateAndSetNextTargetTime(const Time& now,
+                                                   bool by_interval) {
   uint8_t time = (by_interval) ? interval : duration;
   char unit = (by_interval) ? intervalUnit : durationUnit;
 
@@ -83,7 +93,8 @@ void PeriodicAction::setInstantStatus(bool instant) {
   this->instant = instant;
 }
 
-bool PeriodicAction::setIntervalAndDuration(const std::string& body, const Time& now) {
+bool PeriodicAction::setIntervalAndDuration(const std::string& body,
+                                            const Time& now) {
   size_t spacePos = body.find_first_of(' ', 2);
 
   auto str1 = body.substr(0, spacePos);
@@ -130,7 +141,8 @@ bool PeriodicAction::setDuration(const std::string& body) {
   return setDuration(time, unit);
 }
 
-bool PeriodicAction::setInterval(uint8_t interval, char intervalUnit, const Time& now) {
+bool PeriodicAction::setInterval(uint8_t interval, char intervalUnit,
+                                 const Time& now) {
   if (!validateTimeAndUnit(interval, intervalUnit))
     return false;
 
@@ -142,7 +154,8 @@ bool PeriodicAction::setInterval(uint8_t interval, char intervalUnit, const Time
   return true;
 }
 
-bool PeriodicAction::setInterval(const std::string& body, const Time& now) {
+bool PeriodicAction::setInterval(const std::string& body,
+                                 const Time& now) {
   char * endptr;
   uint8_t time = std::strtoul(body.c_str(), & endptr, 10);
   char unit = *endptr;

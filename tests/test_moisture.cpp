@@ -1,7 +1,5 @@
-/* mbed Microcontroller Library
- * Copyright (c) 2019 ARM Limited
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright 2022 Matías Charrut
+// This code is licensed under MIT license (see LICENSE for details)
 
 #include "mbed.h"
 #include "analog_sensor.h"

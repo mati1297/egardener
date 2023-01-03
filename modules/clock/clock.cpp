@@ -147,7 +147,7 @@ bool Time::addDays(uint8_t days) {
   month -= carry * 12;
 
   year += carry;
-  
+
   return true;
 }
 

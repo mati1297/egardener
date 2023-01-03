@@ -82,10 +82,11 @@ class eGardener : public ActivableAction {
   Control controlLight, controlWater;
   Ticker tickerCheckMessages, tickerCheckClock, tickerCheckControlCondition;
   InterruptIn interruptResetWiFi;
-  bool checkMessages, checkClock, checkControlCondition, checkResetWiFi, checkWiFiConnected;
+  bool checkMessages, checkClock, checkControlCondition, checkResetWiFi,
+       checkWiFiConnected;
 
   bool controlWaterManually, controlLightManually;
-  
+
   PeriodicAction periodicSense, periodicWater, periodicLight;
   ConditionableAction conditionableWater, conditionableLight;
 

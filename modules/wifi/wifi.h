@@ -8,7 +8,7 @@
 #include "mbed.h"
 
 #define BUFFER_SIZE 100
-#define SEPARATOR_CHAR char(254)
+#define SEPARATOR_CHAR std::static_cast<char>(254)
 
 enum WiFiStatus {
   WL_NO_SHIELD = 255,
@@ -35,7 +35,6 @@ class WiFi {
   std::string readNBytes(size_t size);
 
   bool asAP;
-  
 
   void restart();
 
@@ -59,7 +58,7 @@ class WiFi {
 
   // Sets WiFi module as Access Point
   void setAsAP();
-  
+
   // Returns SSID and password set in WiFi module
   void getSsidAndPwd(std::string&, std::string&);
 };

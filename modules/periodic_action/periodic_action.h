@@ -1,6 +1,10 @@
+// Copyright 2022 Matías Charrut
+// This code is licensed under MIT license (see LICENSE for details)
+
 #ifndef MODULES_PERIODIC_ACTION_PERIODIC_ACTION_H_
 #define MODULES_PERIODIC_ACTION_PERIODIC_ACTION_H_
 
+#include <string>
 #include "mbed.h"
 #include "clock.h"
 #include "activable_action.h"
@@ -25,9 +29,10 @@ class PeriodicAction {
   void calculateAndSetNextTargetTime(const Time&, bool = true);
 
  public:
-  PeriodicAction(ActivableAction&, bool = false, bool = true, uint8_t = DEFAULT_INTERVAL, char = DEFAULT_DURATION_UNIT,
+  PeriodicAction(ActivableAction&, bool = false, bool = true,
+                 uint8_t = DEFAULT_INTERVAL, char = DEFAULT_DURATION_UNIT,
                  uint8_t = DEFAULT_DURATION, char = DEFAULT_DURATION_UNIT);
-  
+
   // Sets duration of action with number and unit
   bool setDuration(uint8_t, char);
 
