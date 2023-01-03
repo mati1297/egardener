@@ -71,7 +71,7 @@
 class eGardener : public ActivableAction {
  private:
   std::map<std::string, std::pair<uint16_t, uint8_t>> memoryDist;
-  std::string wifi_ssid, wifi_pwd;
+  std::string wifiSsid, wifiPwd;
   WiFi wifi;
   Clock rtc;
   Memory eeprom;

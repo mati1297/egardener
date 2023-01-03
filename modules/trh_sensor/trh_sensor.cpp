@@ -24,7 +24,7 @@ float TRHSensor::senseTemperature() {
     if (timeout_counter > 10) {
       // TODO(matiascharrut): devolver valor invalido
       // y manejarlo en telegram.
-      printf("Sali por timeout\n");
+      printf("TRH Sensor timeout\n");
       break;
     }
     timeout_counter++;

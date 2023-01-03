@@ -29,7 +29,7 @@
 eGardener::eGardener(): memoryDist(),
             wifi(WIFI_SERIAL_TX_PIN, WIFI_SERIAL_RX_PIN,
                WIFI_BAUDRATE),
-            wifi_ssid(), wifi_pwd(),
+            wifiSsid(), wifiPwd(),
             rtc(I2C_PORT2_SDA_PIN, I2C_PORT2_SCL_PIN,
               ADDRESS_RTC),
             eeprom(I2C_PORT2_SDA_PIN, I2C_PORT2_SCL_PIN,
@@ -54,7 +54,6 @@ void eGardener::execute() {
       std::vector<TelegramMessage> messages = bot.getMessages(
                                               MAX_AMOUNT_TELEGRAM_MESSAGES);
       for (auto message : messages) {
-        // TODO CAMBIAR PARA NO HACER SUBSTRING EN TODOS (PONER UN IF GRANDE Y DESPUES TODOS LOS OTROS, O DIRECTO RECORTAR AL PRINCIPIO)
         size_t firstSpacePos = message.text.find_first_of(' ');
         std::string cmd = message.text.substr(0, firstSpacePos);
         std::string body = message.text.substr(firstSpacePos + 1);
@@ -512,8 +511,8 @@ void eGardener::setup() {
   // validar que lo encuentre?
   eeprom.read(address.first, there);
   if (there) {
-    eeprom.read(address.first + sizeof(bool), wifi_ssid);
-    eeprom.read(address.first + sizeof(bool) + MAX_SSID_LENGTH + 1, wifi_pwd);
+    eeprom.read(address.first + sizeof(bool), wifiSsid);
+    eeprom.read(address.first + sizeof(bool) + MAX_SSID_LENGTH + 1, wifiPwd);
   }
 
   address = memoryDist.find("ls")->second;
@@ -689,7 +688,7 @@ void eGardener::connectToWiFi() {
       continue;
     }
     printf("Try %u\n", wifiTryCounter);
-    wifi.connect(wifi_ssid, wifi_pwd);
+    wifi.connect(wifiSsid, wifiPwd);
     ThisThread::sleep_for(1s);
     wifiTryCounter++;
   } while ((status = wifi.getStatus()) != WiFiStatus::WL_CONNECTED

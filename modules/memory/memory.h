@@ -19,9 +19,6 @@ class Memory {
   I2C eeprom;
   uint8_t i2cAddress;
 
- public:
-  Memory(PinName, PinName, uint8_t);
-
   // hasta paginas de 32 bytes. 32kb solo importan los 12 lsb
   uint16_t write(uint16_t, const std::vector<uint8_t> &);
 
@@ -29,6 +26,9 @@ class Memory {
   // se devuelve la cantidad de bytes leidos.
   uint16_t read(uint16_t, std::vector<uint8_t> &);
   std::vector<uint8_t> read(uint16_t address_from, uint16_t address_to);
+
+ public:
+  Memory(PinName, PinName, uint8_t);
 
   bool write(uint16_t, float);
   bool read(uint16_t, float &);
