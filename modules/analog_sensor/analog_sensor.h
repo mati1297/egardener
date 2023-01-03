@@ -9,6 +9,8 @@
 #define VOLTAGE_REF_DEFAULT 3.3
 #define AVERAGE_POINTS_DEFAULT 10
 
+
+// Analog sensor driver
 class AnalogSensor {
  private:
   AnalogIn analog;
@@ -21,10 +23,17 @@ class AnalogSensor {
   AnalogSensor(PinName, float vref = VOLTAGE_REF_DEFAULT,
               uint8_t = AVERAGE_POINTS_DEFAULT);
 
+  // Returns sensor value. If raw is false, then the value
+  // is calculated in function of max and min.
   float sense(bool raw = false);
 
+  // Returns calibrated max value.
   float getMax();
+
+  // Returns calibrated min value.
   float getMin();
+
+  // Validates and sets maximum and minimum values.
   bool setMaxAndMin(float, float);
 };
 

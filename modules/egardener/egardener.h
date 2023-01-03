@@ -67,7 +67,8 @@
 
 #define TELEGRAM_RESPONSE_WAIT_TIMEOUT 240
 
-
+// Principal class of the program, initializes objects, mantains flow,
+// controls resources and communicates with user
 class eGardener : public ActivableAction {
  private:
   std::map<std::string, std::pair<uint16_t, uint8_t>> memoryDist;
@@ -133,6 +134,8 @@ class eGardener : public ActivableAction {
 
  public:
   eGardener();
+
+  // Executes eGardener program.
   void execute();
 };
 

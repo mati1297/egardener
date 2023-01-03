@@ -23,6 +23,8 @@ enum WiFiStatus {
   WL_AS_AP = 10
 };
 
+
+// WiFi driver. Drives ESP32 through serial port
 class WiFi {
  private:
   BufferedSerial serial;
@@ -39,15 +41,27 @@ class WiFi {
 
  public:
   WiFi(PinName, PinName, int);
+
+  // Conects WiFi to a network with ssid and password
   std::string connect(const std::string &, const std::string &);
+
+  // Returns WiFi status
   WiFiStatus getStatus();
+
+  // Disconnects WiFi
   std::string disconnect();
+
+  // Sends post request through WiFi
   std::string post(const std::string &, const std::string&);
+
+  // Sends get request through WiFi
   std::string get(const std::string &);
+
+  // Sets WiFi module as Access Point
   void setAsAP();
+  
+  // Returns SSID and password set in WiFi module
   void getSsidAndPwd(std::string&, std::string&);
-
-
 };
 
 #endif  // MODULES_WIFI_WIFI_H_

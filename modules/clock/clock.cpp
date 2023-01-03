@@ -8,8 +8,6 @@
 #include "wifi.h"
 #include "Json.h"
 
-// CHEQUEAR QUE HAYA QUEDADO BIEN LO DEL DATE Y DAY. LO DE MODE TWELVE ETC. (CHEQUEAR BASICAMENTE QUE SE LEE BIEN LA HORA.)
-
 Clock::Clock(PinName SDA, PinName SCL, uint8_t address): rtc(SDA, SCL),
                                                          address(address << 1) {
   rtc.start();
@@ -67,7 +65,6 @@ Time Clock::get() {
   return Time(seconds, minutes, hours, day, month, year);
 }
 
-// agregar twelve.
 bool Clock::sync(WiFi& wifi, const std::string& timezone) {
   std::string url = "https://www.timeapi.io/api/Time/current/zone?timeZone="
                     + timezone;
@@ -205,7 +202,7 @@ bool Time::operator==(const Time& other) const {
 bool Time::operator<(const Time& other) const {
   if (*this == other)
     return false;
-  
+
   if (year > other.year) return false;
   if (year < other.year) return true;
   if (month > other.month) return false;
@@ -220,17 +217,6 @@ bool Time::operator<(const Time& other) const {
   if (seconds < other.seconds) return true;
 
   return false;
-
-
-  // TODO(matiascharrut) refactorizar.
-  /*result = result && year <= other.year;
-  result = result && month <= other.month;
-  result = result && day <= other.day;
-  result = result && hours <= other.hours;
-  result = result && minutes <= other.minutes;
-  result = result && seconds <= other.seconds;
-
-  return result;*/
 }
 
 bool Time::operator<=(const Time& other) const {

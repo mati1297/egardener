@@ -46,7 +46,6 @@ bool ConditionableAction::setConditions(const std::string& conditions) {
       if (valueString.length() > MAX_NUMBER_LENGTH || valueString.length() < 1)
         return false;
       uint16_t valueLong = strtoul(valueString.c_str(), &endptr, 10);
-      // aclarar que es con punto.
       if (*endptr || *endptr == '.' || valueLong > 255)
         return false;
       value = valueLong;

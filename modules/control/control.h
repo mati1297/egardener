@@ -8,6 +8,7 @@
 #include "mbed.h"
 #include "periodic_action.h"
 
+// Logical output of controls driver
 class Control : public ActivableAction {
  private:
   DigitalOut out;
@@ -17,9 +18,13 @@ class Control : public ActivableAction {
  public:
   Control(PinName);
 
+  // Activates control
   void activate();
+
+  // Deactivates control
   void deactivate();
 
+  // Returns true if control is activated
   bool isActivated();
 };
 

@@ -9,8 +9,6 @@
 #include "telegram_bot.h"
 #include "Json.h"
 
-// cambiar por iteradores donde pueda.
-
 TelegramBot::TelegramBot(WiFi &wifi, const std::string &token):
                          wifi(wifi), token(token), last_update(-1) {}
 
@@ -53,7 +51,6 @@ std::vector<TelegramMessage> TelegramBot::getMessages(size_t offset,
 
   std::vector<TelegramMessage> messages;
 
-  // ver lo de probar validjson con varios maxTokens.
   Json json(response.c_str(), response.length(), 1000);
 
   if (!json.isValidJson())
@@ -132,7 +129,4 @@ TelegramMessage::TelegramMessage(const std::string &update_id,
                                  const std::string &text):
                                  update_id(update_id), from_id(from_id),
                                  from_username(from_username),
-                                 from_name(from_name), text(text) {
-    // TODO(matiascharrut) validar que este bien cargado todo y arreglar
-    // forzosamente. Ver como eliminar constructor de struct por {}
-}
+                                 from_name(from_name), text(text) {}

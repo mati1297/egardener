@@ -48,7 +48,6 @@ eGardener::eGardener(): memoryDist(),
 }
 
 void eGardener::execute() {
-  // validar de quien viene y guardar en memoria.
   while (true) {
     if (checkMessages) {
       std::vector<TelegramMessage> messages = bot.getMessages(
@@ -88,7 +87,7 @@ void eGardener::execute() {
         else if(message.text == "/senseall")
           sendSenseAll(message.from_id);
         else if (message.text == "/activatesenseinterval")
-          setSenseIntervalActivated(message.from_id, true); // si se activa queda desde el ultimo.
+          setSenseIntervalActivated(message.from_id, true);
         else if (message.text == "/deactivatesenseinterval")
           setSenseIntervalActivated(message.from_id, false);
         else if (message.text == "/senseintervalstatus")
@@ -659,8 +658,6 @@ void eGardener::setup() {
   printf("Ready!\n");
 }
 
-// devuelve todo en minusculas.
-// Se le podri agregar para que tome del mismo usuario si o si.
 std::string eGardener::getTelegramResponseForInteraction() {
   std::vector<TelegramMessage> messages;
   uint8_t counter = 0;
@@ -693,7 +690,6 @@ void eGardener::connectToWiFi() {
     wifiTryCounter++;
   } while ((status = wifi.getStatus()) != WiFiStatus::WL_CONNECTED
             && wifiTryCounter < WIFI_CONNECT_RETRIES);
-         
   if (wifi.getStatus() == WiFiStatus::WL_CONNECTED) {
     printf("Wi-Fi connected succesfully\n");
     rtc.sync(wifi, TIMEZONE);
@@ -778,7 +774,6 @@ void eGardener::setControlConditions(const std::string& user_id, const std::stri
   uint16_t pos_accum = 0;
 
   for (auto it = conditions.begin(); it != conditions.end(); it++) {
-    // revisar en diccionario
     eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + pos_accum, it->first);
     eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + pos_accum, it->second.first);
     eeprom.write(address.first + sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) + sizeof(uint8_t) + pos_accum, it->second.second);
@@ -792,7 +787,6 @@ void eGardener::setControlConditions(const std::string& user_id, const std::stri
 }
 
 void eGardener::setControlInterval(const std::string& user_id, const std::string& body) {
-  // +2 por que salteo el espacio
   PeriodicAction * control;
 
   if (body[0] == 'w')

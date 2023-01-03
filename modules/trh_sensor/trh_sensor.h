@@ -23,6 +23,7 @@
 #define TEMPERATURE_MASK 0xFFFC
 #define RH_MASK 0xFFF0
 
+// Temperature and relative humidity sensor driver
 class TRHSensor {
  private:
   I2C sensor;
@@ -33,7 +34,11 @@ class TRHSensor {
 
  public:
   TRHSensor(PinName, PinName, uint8_t);
+
+  // Returns sensed temperature.
   float senseTemperature();
+
+  // Returns sensed Humidity
   float senseHumidity();
 };
 

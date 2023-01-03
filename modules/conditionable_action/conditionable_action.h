@@ -14,6 +14,7 @@
 
 #define MAX_NUMBER_LENGTH 3
 
+// Represents actions that execute when conditions are fullfiled
 class ConditionableAction {
  public:
    enum Symbol {
@@ -37,13 +38,24 @@ class ConditionableAction {
 
  public:
   ConditionableAction(ActivableAction&, std::vector<char>, bool = false);
-                 
+
+  // Sets status as activated or deactivated
   void setActivatedStatus(bool);
+
+  // Executes action if conditions are fullfiled over
+  // values sensed
   void execute(const std::map<char, uint8_t>&);
+
+  // Stops execution
   void stop();
 
+  // Returns true is status is activated
   bool isActivated();
+
+  // Sets conditions with dictionary
   bool setConditions(const std::map<char, ConditionPair>&);
+
+  // Sets conditions with string
   bool setConditions(const std::string&);
 
   const std::map<char, ConditionPair>& getConditions();

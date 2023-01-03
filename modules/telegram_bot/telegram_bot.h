@@ -10,6 +10,7 @@
 #include "wifi.h"
 #include "Json.h"
 
+// Represents a Telegram message
 struct TelegramMessage {
   const std::string update_id;
   const std::string from_id;
@@ -21,6 +22,8 @@ struct TelegramMessage {
                   const std::string&, const std::string&);
 };
 
+// Allows to communicate between microcontroller and Telegram bot
+// through HTTP requests
 class TelegramBot {
  private:
   WiFi &wifi;
@@ -33,10 +36,14 @@ class TelegramBot {
 
  public:
   TelegramBot(WiFi &, const std::string &);
+
+  // Setups bot obtaining initial update of the bot
   void setup();
+
+  // Sends message to an user
   bool sendMessage(const std::string &, const std::string &);
 
-  // validate correct.
+  // Gets messages sent to bot
   std::vector<TelegramMessage> getMessages(size_t limit = 20);
 };
 

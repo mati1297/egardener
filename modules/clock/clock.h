@@ -20,7 +20,7 @@
 
 #define MONTH_DAYS {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
 
-// El manejo es solo en 24 horas, se puede formatear para salida en 12.
+// Represents hour and date
 struct Time {
  private:
   uint8_t seconds;
@@ -30,8 +30,7 @@ struct Time {
   uint8_t month;
   uint8_t year;
 
- public: 
-
+ public:
   Time(uint8_t seconds = 0, uint8_t minutes = 0, uint8_t hours = 0,
        uint8_t day = 0, uint8_t month = 0, uint8_t year = 0);
 
@@ -44,19 +43,30 @@ struct Time {
   bool operator>(const Time&) const;
   bool operator>=(const Time&) const;
 
+  // Add seconds
   bool addSeconds(uint8_t);
+
+  // Add minutes
   bool addMinutes(uint8_t);
+
+  // Add hours
   bool addHours(uint8_t);
+
+  // Add days
   bool addDays(uint8_t);
 
+  // Returns a string with hour formatted as 'HH:MM:SS'
   std::string formatTime(bool = false) const;
+
+  // Returns a string with date formatted as 'DD/MM/YYYY'
   std::string formatDate() const;
 
   friend class Clock;
 
-  // ver como eliminar constructor de struct por {}
+  // TODO(matiascharrut) eliminate {} constructor.
 };
 
+// RTC clock driver
 class Clock {
  private:
   I2C rtc;
@@ -67,8 +77,14 @@ class Clock {
 
  public:
   Clock(PinName, PinName, uint8_t);
+
+  // Sets time in RTC module with Time struct.
   bool set(const Time &);
+
+  // Gets time from RTC module.
   Time get();
+
+  // Syncs time with server and sets it in RTC module.
   bool sync(WiFi &, const std::string &);
 };
 

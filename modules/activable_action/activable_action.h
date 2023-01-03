@@ -3,9 +3,13 @@
 
 #include "mbed.h"
 
+// Abstract class that represent activable actions
 class ActivableAction {
-  public:
+ public:
+    // Abstract method for activate action
     virtual void activate();
+
+    // Abstract method form deactivate action
     virtual void deactivate();
 };
 
