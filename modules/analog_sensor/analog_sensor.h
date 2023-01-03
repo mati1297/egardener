@@ -20,8 +20,6 @@ class AnalogSensor {
  public:
   AnalogSensor(PinName, float vref = VOLTAGE_REF_DEFAULT,
               uint8_t = AVERAGE_POINTS_DEFAULT);
-  void calibrateMax();
-  void calibrateMin();
 
   float sense(bool raw = false);
 
