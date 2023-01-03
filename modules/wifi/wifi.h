@@ -8,7 +8,7 @@
 #include "mbed.h"
 
 #define BUFFER_SIZE 100
-#define SEPARATOR_CHAR std::static_cast<char>(254)
+#define SEPARATOR_CHAR static_cast<char>(254)
 
 enum WiFiStatus {
   WL_NO_SHIELD = 255,

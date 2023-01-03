@@ -75,7 +75,8 @@ void eGardener::execute() {
           continue;
         }
         if (!userRegister.isUserRegistered(message.from_id)) {
-          bot.sendMessage(message.from_id, "You need to be registered. " +
+          bot.sendMessage(message.from_id,
+                          std::string("You need to be registered. ") +
                           "Use /addme followed by password to register.");
           continue;
         }
@@ -201,8 +202,9 @@ void eGardener::sendWelcomeMessage(const std::string& user_id) {
   if (userRegister.isUserRegistered(user_id))
     bot.sendMessage(user_id, "Welcome to eGardener!");
   else
-    bot.sendMessage(user_id, "Welcome to eGardener, you are not registered. " +
-                              "Register with /addme followed by the password");
+    bot.sendMessage(user_id, 
+                    std::string("Welcome to eGardener, you are not regis") +
+                    "tered. Register with /addme followed by the password");
 }
 
 void eGardener::setPwd(const std::string& user_id, const std::string& body) {
@@ -380,18 +382,20 @@ void eGardener::calibrateLightSensor(const std::string& user_id) {
 void eGardener::calibrateMoistureSensor(const std::string& user_id) {
   float min, max;
 
-  bot.sendMessage(user_id, "Keep your moisture sensor in the air" +
-                           "and type ok (any other text to cancel)");
+  bot.sendMessage(user_id,
+                  std::string("Keep your moisture sensor in the air") +
+                  "and type ok (any other text to cancel)");
   if (getTelegramResponseForInteraction() != "ok") {
     bot.sendMessage(user_id, "Operation cancelled");
     return;
   }
   min = moistureSensor.sense(true);
 
-  bot.sendMessage(user_id, "Put your moisture sensor in a glass with water " +
-                           "(IMPORTANT: leave half a centimetre below the " +
-                           "line), wait at least 20 seconds and type ok" +
-                           " (any other text to cancel)");
+  bot.sendMessage(user_id, 
+                  std::string("Put your moisture sensor in a glass with") +
+                  " water (IMPORTANT: leave half a centimetre below the " +
+                  "line), wait at least 20 seconds and type ok" +
+                  " (any other text to cancel)");
   if (getTelegramResponseForInteraction() != "ok") {
               bot.sendMessage(user_id, "Operation cancelled");
     return;
