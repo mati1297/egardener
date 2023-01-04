@@ -202,7 +202,7 @@ void eGardener::sendWelcomeMessage(const std::string& user_id) {
   if (userRegister.isUserRegistered(user_id))
     bot.sendMessage(user_id, "Welcome to eGardener!");
   else
-    bot.sendMessage(user_id, 
+    bot.sendMessage(user_id,
                     std::string("Welcome to eGardener, you are not regis") +
                     "tered. Register with /addme followed by the password");
 }
@@ -391,7 +391,7 @@ void eGardener::calibrateMoistureSensor(const std::string& user_id) {
   }
   min = moistureSensor.sense(true);
 
-  bot.sendMessage(user_id, 
+  bot.sendMessage(user_id,
                   std::string("Put your moisture sensor in a glass with") +
                   " water (IMPORTANT: leave half a centimetre below the " +
                   "line), wait at least 20 seconds and type ok" +
