@@ -795,7 +795,7 @@ void eGardener::setupMemoryDist() {
                     sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) +
                     sizeof(uint8_t) + sizeof(char))));
   position += sizeof(bool) * 2 + sizeof(uint8_t) + sizeof(char) +
-              (uint8_t) + sizeof(char);
+              sizeof(uint8_t) + sizeof(char);
 
   memoryDist.insert(std::make_pair("ccw", std::make_pair(position,
                     sizeof(bool) * 2 + sizeof(uint8_t) + (sizeof(char) +
