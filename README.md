@@ -54,3 +54,13 @@ En donde se tienen las carpetas o archivos:
 * `README.md`: este archivo *read me*.
 * Otros archivos tales como licencia, archivos de configuración de mBed OS, etc.
 
+## Manual de uso
+
+### Conexión a PC
+
+### Iniciar una conversación con el bot eGardener de Telegram
+
+Teniendo la aplicación Telegram descargada en un teléfono movil o una computadora, se debe comenzar una conversación con el bot eGardener. Para ello, estando en la pantalla principal de Telegram, se debe aplicar en la lupa para buscar y se debe ingresar 'eGardener', se encontrará el bot con la imagen de perfil con el logo del proyecto. Ingresando al chat ya se puede comenzar a interactuar con el bot.
+
+
+
