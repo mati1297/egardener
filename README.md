@@ -56,7 +56,7 @@ En donde se tienen las carpetas o archivos:
 
 ## Manual de uso
 
-Se detallan los pasos a seguir para la utilización del dispositivo a través del bot de Telegram. En la última sección se encuentra el resumen de los comandos con su uso específico (con variables, etc).
+Se detallan los pasos a seguir para la utilización del dispositivo a través del bot de Telegram. En [Resumen de comandos](#resumen-de-comandos) se encuentra el resumen de los comandos con su uso específico (con variables, etc).
 
 ### Conexión a PC
 
@@ -78,7 +78,7 @@ Teniendo la aplicación Telegram descargada en un teléfono movil o una computad
 
 Una vez iniciado el chat, se deberá enviar el comando `/start` (el cual es obligatorio ya que Telegram no habilita el chat hasta que se envie, y permite enviarlo con un botón). En este punto, el bot contestará con un mensaje de bienvenida y pedirá que el usuario se registre.
 
-Para registrarse, se debe enviar el comando `/addme` seguido de un espacio y la contraseña, la contraseña es dada por puerto serie USB como se muestra en la sección de Conexión a PC. Una vez ingresada la contraseña, se puede comenzar a interactuar.
+Para registrarse, se debe enviar el comando `/addme` seguido de un espacio y la contraseña, la contraseña es dada por puerto serie USB como se muestra en [Conexión a PC](#conexión-a-pc). Una vez ingresada la contraseña, se puede comenzar a interactuar.
 
 La contraseña puede ser cambiada utilizando el comando `/setpwd`, seguido de un espacio y la contraseña nueva y luego otro espacio y la contraseña anterior si es que tenia. 
 
@@ -92,13 +92,15 @@ Los usuarios registrados pueden ser cuatro como máximo y recibirán todas las n
 
 Mediante sensado manual se pueden sensar las variables por separado y todas las variables al mismo tiempo. Para ello se utilizan los comandos `/temperature`, `/humidity`, `/moisture`, `/light` y `/senseall`. El reporte contiene además un *timestamp* con el tiempo del sensado.
 
-FIGURA DE /temperature Y DE /SENSEALL
+<p align=center>
+    <img src="docs/images/bot_sense.jpg" height="500" alt="Sensado manual"/>
+</p>
 
 ### Control manual
 
 Para encender manualmente un control (agua o luz), se debe utilizar el comando `/activatecontrol` y el comando `/deactivatecontrol` para apagarlo. Estos comandos deben ir seguidos por la letra `l` o `w` para luz o agua respectivamente.
 
-Para conocer el estado de encendido del control, se puede utilizar el comando `/controlstatus` seguido del control elegido. De estar activado manualmente será aclarado, sino se aclara nada, es que se encendió tanto por intervalo como por condiciones (ver secciones correspondientes).
+Para conocer el estado de encendido del control, se puede utilizar el comando `/controlstatus` seguido del control elegido. De estar activado manualmente será aclarado, sino se aclara nada, es que se encendió tanto por intervalo como por condiciones (ver [Control por intervalo de tiempo](#control-por-intervalo-de-tiempo) y [Control por condiciones](#control-por-condiciones)).
 
 <p align=center>
     <img src="docs/images/bot_control.jpg" height="500" alt="Control manual"/>
