@@ -8,6 +8,10 @@ eGardener es un sistema de monitoreo y control de jardines a través de Internet
 
 El proyecto se realiza en el marco del trabajo final de la materia Sistemas Embebidos de la Facultad de Ingeniería de la Universidad de Buenos Aires.
 
+eGardener is a garden monitoring and control system through Internet implemented with mBed OS using a STM32 Nucleo-144 F429ZI development board.
+
+This work is carried out within the framework of the Embedded Systems subject of the Faculty of Engineering of the University of Buenos Aires.
+
 [Repositorio](https://github.com/mati1297/egardener)
 
 [Memorias y Documentación](https://docs.google.com/document/d/1Q9U6rOzLBda17CwL__wQlIctoHDDly55YAzcOr6e88I/edit?usp=sharing)
