@@ -10,7 +10,10 @@ El proyecto se realiza en el marco del trabajo final de la materia Sistemas Embe
 
 [Repositorio](https://github.com/mati1297/egardener)
 
+[Memorias y Documentación](https://docs.google.com/document/d/1Q9U6rOzLBda17CwL__wQlIctoHDDly55YAzcOr6e88I/edit?usp=sharing)
+
 [Definición de Requisitos y Casos de Uso del Trabajo Final](https://docs.google.com/document/d/11dgvYxZRJ_eEkciaerqvtIlO_5C3YHUYF0_V8Po2s9I/edit?usp=sharing)
+
 
 ## Descripción y diagrama en bloques
 
