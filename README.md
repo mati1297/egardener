@@ -4,38 +4,33 @@
     <img src="docs/images/banner.png" alt="Banner eGardener" height="350"/>
 </p>
 
-eGardener es un sistema de monitoreo y control de jardines a través de Internet implementado en mBed OS utilizando como placa de desarrollo una placa STM32 Nucleo-144 F429ZI.
-
-El proyecto se realiza en el marco del trabajo final de la materia Sistemas Embebidos de la Facultad de Ingeniería de la Universidad de Buenos Aires.
-
 eGardener is a garden monitoring and control system through Internet implemented with mBed OS using a STM32 Nucleo-144 F429ZI development board.
 
 This work is carried out within the framework of the Embedded Systems subject of the Faculty of Engineering of the University of Buenos Aires.
 
-[Repositorio](https://github.com/mati1297/egardener)
+[Repository](https://github.com/mati1297/egardener)
 
-[Memorias y Documentación](https://docs.google.com/document/d/1Q9U6rOzLBda17CwL__wQlIctoHDDly55YAzcOr6e88I/edit?usp=sharing)
+[Memories and documentation (Spanish)](https://docs.google.com/document/d/1Q9U6rOzLBda17CwL__wQlIctoHDDly55YAzcOr6e88I/edit?usp=sharing)
 
-[Definición de Requisitos y Casos de Uso del Trabajo Final](https://docs.google.com/document/d/11dgvYxZRJ_eEkciaerqvtIlO_5C3YHUYF0_V8Po2s9I/edit?usp=sharing)
+[Requisites definition and use cases (Spanish)](https://docs.google.com/document/d/11dgvYxZRJ_eEkciaerqvtIlO_5C3YHUYF0_V8Po2s9I/edit?usp=sharing)
 
+## Description and block diagram
 
-## Descripción y diagrama en bloques
+eGardener provides temperature, ambient humidity, moisture and light sensing. In addition, it allows the activation of lighting and irrigation actuators, including only the actuator control logic (not the actuator control itself).
 
-eGardener provee sensado de temperatura, humedad ambiente y de la tierra y luz. Además, permite la activación de actuadores de luz y riego, incluyendo la lógica de control de los actuadores (no el control de los actuadores en sí). 
+The system can be controlled over the Internet using a bot from the Telegram messaging application. Through this bot it is possible to interact with the device and obtain information on the data sensing as well as configure aspects of the control and sensing of the garden.
 
-El sistema puede ser controlado a través de Internet utilizando un bot de la aplicación de mensajería Telegram. A través de este bot es posible interactuar con el dispositivo y obtener información del sensado de datos como también configurar aspectos del control y del sensado del jardín.
+It is possible to sense the parameters both manually and on a regular basis. And the control of the garden is carried out both regularly or based on the parameters sensed.
 
-Es posible sensar los parámetros tanto manualmente como de manera regular. Y el control del jardín se realiza tanto de manera regular o en función de los parámetros sensados.
-
-Se muestra en la Figura un diagrama en bloques del proyecto. Se observan tres grandes grupos de periféricos: comunicación, sensado, control de tiempo y simulación de actuadores. La primera consiste en un microcontrolador ESP32 utilizado como Módulo Wi-Fi a través de puerto serie. La segunda consiste en tres sensores: un sensor de humedad y temperatura ambiente (que se controla a través de I2C), un sensor de luz, y un sensor de humedad de tierra, el tercero consiste en un módulo RTC para poder llevar un control preciso del tiempo para las funciones por tiempo, el último consiste en dos leds que simularán el encendido de los actuadores.
+A block diagram of the project is shown in Figure. Three large groups of peripherals are observed: communication, sensing, time control and actuator simulation. The first consists of an ESP32 microcontroller used as a Wi-Fi Module through a serial port. The second consists of three sensors: a room humidity and temperature sensor (which is controlled via I2C), a light sensor, and a ground humidity sensor, the third consists of an RTC module to be able to carry out precise control of the time for the functions by time, the last one consists of two leds that will simulate the activation of the actuators.
 
 <p align=center>
-    <img src="docs/images/block_diagram.png" alt="Diagrama en bloques del proyecto" height="350"/>
+    <img src="docs/images/block_diagram.png" alt="Project block diagram" height="350"/>
 </p>
 
-## Organización del repositorio
+## Repository structure
 
-El repositorio se organiza con la siguiente estructura
+The repository is structured in the following way
 
     .
     ├── docs
@@ -53,143 +48,144 @@ El repositorio se organiza con la siguiente estructura
     └── ...
 
 
-En donde se tienen las carpetas o archivos:
-* `docs/`: carpeta que incluye documentos del proyecto, tales como *datasheets* de los componentes utilizados, e imágenes (utilizadas en este y otros documentos).
-* `esp32_wifi/`: carpeta que contiene los archivos fuente utilizados para programar la placa ESP32 utilizada como módulo Wi-Fi y controlada a través de puerto serie.
-* `modules/`: carpeta que contiene los archivos fuente de los distintos módulos que integran el programa del sistema.
-* `main.cpp`: archivo principal del programa del sistema.
-* `README.md`: este archivo *read me*.
-* Otros archivos tales como licencia, archivos de configuración de mBed OS, etc.
+Where there are the folders or files:
+* `docs/`: folder which includes projects documents, such as datasheets of the components and images (used in this and other documents).
+* `esp32_wifi/`: folder that contains source files used for programming the ESP32 board used as Wi-Fi module and controlled through a serial port.
+* `modules/`: folder which contains source files of the different modules which are part of the system program.
+* `main.cpp`: main source file of the system program.
+* `README.md`: this readme file.
+* `README_es.md`: this readme file in Spanish.
+* Other files such as license, mBed OS configuration files, etcetera.
 
-## Manual de uso
+## User manual
 
-Se detallan los pasos a seguir para la utilización del dispositivo a través del bot de Telegram. En [Resumen de comandos](#resumen-de-comandos) se encuentra el resumen de los comandos con su uso específico (con variables, etc).
+The steps to using the device through the Telegram bot are detailed here. In [Command Summary](#command-summary) the complete summary of the commands can be consulted with their specific use (variables, etc).
 
-### Conexión a PC
+### PC Connection
 
-Para comenzar, se deben conectar tanto la placa NUCLEO por USB a una computadora o alimentación como también la placa ESP32. Una vez conectada la placa NUCLEO, esta se inicializará y lo informará a través de puerto serie USB. Se verá información como la de la Figura y se informará la contraseña para registrarse en el bot. En este caso se utiliza el programa CoolTerm.
-
-<p align=center>
-    <img src="docs/images/inicializacion.png" alt="Reporte de inicialización NUCLEO"/>
-</p>
-
-### Iniciar una conversación con el bot eGardener de Telegram
-
-Teniendo la aplicación Telegram descargada en un teléfono movil o una computadora, se debe comenzar una conversación con el bot eGardener. Para ello, estando en la pantalla principal de Telegram, se debe aplicar en la lupa para buscar y se debe ingresar 'eGardener', se encontrará el bot con la imagen de perfil con el logo del proyecto. Ingresando al chat ya se puede comenzar a interactuar con el bot.
+To get started, both the NUCLEO board must be connected via USB to a computer or power supply as well as the ESP32 board. Once the NUCLEO board is connected, it will initialize and report it through the USB serial port. Information like the one in Figure will be seen and the password to register in the bot will be informed. In this case, the CoolTerm program is used.
 
 <p align=center>
-    <img src="docs/images/bot_chat_vacio.jpg" height="500" alt="Comienzo de chat vacio"/>
+    <img src="docs/images/inicializacion.png" alt="Initialization report by NUCLEO"/>
 </p>
 
-### Comienzo de conversación y registro
+### Start a conversation with the eGardener Telegram bot
 
-Una vez iniciado el chat, se deberá enviar el comando `/start` (el cual es obligatorio ya que Telegram no habilita el chat hasta que se envie, y permite enviarlo con un botón). En este punto, el bot contestará con un mensaje de bienvenida y pedirá que el usuario se registre.
-
-Para registrarse, se debe enviar el comando `/addme` seguido de un espacio y la contraseña, la contraseña es dada por puerto serie USB como se muestra en [Conexión a PC](#conexión-a-pc). Una vez ingresada la contraseña, se puede comenzar a interactuar.
-
-La contraseña puede ser cambiada utilizando el comando `/setpwd`, seguido de un espacio y la contraseña nueva y luego otro espacio y la contraseña anterior si es que tenia. 
-
-Los usuarios registrados pueden ser cuatro como máximo y recibirán todas las notificaciones de sensado automático. Para quitarse del registro se puede utilizar el comando `/removeme`.
+Having the Telegram application downloaded on a mobile phone or a computer, a conversation with the eGardener bot should be started. To do this, being on the main Telegram screen, you must apply in the magnifying glass to search and enter 'eGardener', you will find the bot with the profile image with the logo of the project. Entering the chat you can start interacting with the bot.
 
 <p align=center>
-    <img src="docs/images/bot_comienzo.jpg" height="500" alt="Comienzo de chat"/>
+    <img src="docs/images/bot_chat_vacio.jpg" height="500" alt="Empty chat start"/>
 </p>
 
-### Sensado manual
+### Conversation start and register
 
-Mediante sensado manual se pueden sensar las variables por separado y todas las variables al mismo tiempo. Para ello se utilizan los comandos `/temperature`, `/humidity`, `/moisture`, `/light` y `/senseall`. El reporte contiene además un *timestamp* con el tiempo del sensado.
+Once the chat is started, the `/start` command must be sent (which is mandatory since Telegram does not enable the chat until it is sent, and allows sending it with a button). At this point, the bot will reply with a welcome message and ask the user to register.
+
+To register, you must send the command `/addme` followed by a space and the password, the password is given by USB serial port as shown in [Connection to PC](#pc-connection). Once the password is entered, you can start interacting.
+
+The password can be changed using the `/setpwd` command, followed by a space and the new password, and then another space and the old password if any.
+
+Registered users can be a maximum of four and will receive all auto sense notifications. To remove yourself from the registry you can use the `/removeme` command.
 
 <p align=center>
-    <img src="docs/images/bot_sense.jpg" height="500" alt="Sensado manual"/>
+    <img src="docs/images/bot_comienzo.jpg" height="500" alt="Chat start"/>
 </p>
 
-### Control manual
+### Manual sensing
 
-Para encender manualmente un control (agua o luz), se debe utilizar el comando `/activatecontrol` y el comando `/deactivatecontrol` para apagarlo. Estos comandos deben ir seguidos por la letra `l` o `w` para luz o agua respectivamente.
+By manual sensing, variables can be sensed separately and all variables at the same time. This is done using the `/temperature`, `/humidity`, `/moisture`, `/light` and `/senseall` commands. The report also contains a timestamp with the time of the sensing.
 
-Para conocer el estado de encendido del control, se puede utilizar el comando `/controlstatus` seguido del control elegido. De estar activado manualmente será aclarado, sino se aclara nada, es que se encendió tanto por intervalo como por condiciones (ver [Control por intervalo de tiempo](#control-por-intervalo-de-tiempo) y [Control por condiciones](#control-por-condiciones)).
+<p align=center>
+    <img src="docs/images/bot_sense.jpg" height="500" alt="Manual sensing"/>
+</p>
+
+### Manual control
+
+To manually turn on a control (water or light), you must use the `/activatecontrol` command and the `/deactivatecontrol` command to turn it off. These commands must be followed by the letter `l` or `w` for light or water respectively.
+
+To find out the power-on status of the control, you can use the `/controlstatus` command followed by the chosen control. It will be clarified if it is manually activated, if nothing is clarified, it is that it was turned on both by interval and by conditions (see [Control by time interval](#control-by-time-interval) and [Control by conditions]( #control-by-conditions)).
 
 <p align=center>
     <img src="docs/images/bot_control.jpg" height="500" alt="Control manual"/>
 </p>
 
-### Sensado por intervalo de tiempo
+### Sensing by time interval
 
-El sensado por intervalo de tiempo permite sensar cada cierto tiempo todas las variables. Para ello se debe configurar el intervalo de tiempo con `/setsenseinterval` seguido de un espacio y el intervalo como tiempo y luego la unidad (por ejemplo `12h` para 12 horas).
+The sensing by time interval allows sensing from time to time all the variables. To do this you must set the time interval with `/setsenseinterval` followed by a space and the interval as time and then the unit (eg `12h` for 12 hours).
 
-Este sensado puede ser activado y desactivado con `/activatesenseinterval` y `/deactivatesenseinterval` respectivamente. 
+This sensing can be turned on and off with `/activatesenseinterval` and `/deactivatesenseinterval` respectively.
 
-Para chequear el estado del sensado se puede utilizar `/senseintervalstatus`. Por último, se puede chequear cual es el próximo tiempo en que se lanzará el sensado con `/nextsensetime`.
-
-<p align=center>
-    <img src="docs/images/bot_sense_interval.jpg" height="500" alt="Sensado por intervalo"/>
-</p>
-
-### Control por intervalo de tiempo
-
-El control por intervalo de tiempo permite activar cada cierto tiempo y por una determinada duración cada control del dispositivo (luz y agua). Cada comando especificado en esta sección deberá ser seguido por la letra `l` o `w` para luz o agua respectivamente, y luego seguido de las variables necesarias con un espacio intermedio (ver el resumen de comandos para más información).
-
-Para configurar el intervalo y la duración del control, se utiliza el comando `/setcontrolinterval` seguido del control elegido, el intervalo de tiempo con su unidad (por ejemplo `12h` para 12 horas) y la duración del control con el mismo formato.
-
-Este control puede ser activado y desactivado con `/activatecontrolinterval` y `/deactivatecontrolinterval` respectivamente seguidos por el control elegido.
-
-Para chequear el estado del sensado se puede utilizar `/controlintervalstatus` y para chequear el estado de encendido del control se utiliza `/controlstatus`. Por último, se puede chequear cual es el próximo tiempo en que se lanzará el sensado con `/nextcontroltime`. Todos seguidos por el control elegido.
+To check the status of the sense you can use `/senseintervalstatus`. Finally, you can check the next time the sense will be launched with `/nextsensetime`.
 
 <p align=center>
-    <img src="docs/images/bot_control_interval.jpg" height="500" alt="Control por intervalo"/>
+    <img src="docs/images/bot_sense_interval.jpg" height="500" alt="Sensing by time interval"/>
 </p>
 
-### Control por condiciones
+### Control by time interval
 
-El control por condiciones permite activar cada control del dispositivo (luz y agua) según condiciones de las variables sensadas por el dispositivo. Cada comando específico de esta sección deberá ser seguido por la letra `l` o `w` para luz o agua respectivamente, y luego seguido de las variables necesarias con un espacio intermedio (ver el resumen de comandos para más información).
+The control by time interval allows to activate from time to time and for a certain duration each control of the device (light and water). Each command specified in this section must be followed by the letter `l` or `w` for light or water respectively, and then followed by the necessary variables with a space in between (see the command summary for more information).
 
-Para configurar las condiciones del control, se utiliza el comando `/setcontrolcondition` seguido del control elegido, y las condiciones, estas deben ser ingresadas con su signo de comparación y separadas por una coma como `l < valor, t > valor`. Los signos disponibles son menor (`<`) y mayor (`>`) y las variables tienen letras representativas de las variables sensadas (`t` para temperatura, `l` para luz, `m` para humedad de suelo (*moisture*) y `h` para humedad ambiente). Se pueden ingresar condiciones solo para algunas variables, no es necesario que haya una para cada una.
+To set the control interval and duration, use the `/setcontrolinterval` command followed by the chosen control, the time interval with its unit (eg `12h` for 12 hours) and the control duration in the same format.
 
-Este control puede ser activado y desactivado con `/activatecontrolcondition` y `/deactivatecontrolcondition` respectivamente seguidos por el control elegido.
+This control can be activated and deactivated with `/activatecontrolinterval` and `/deactivatecontrolinterval` respectively followed by the chosen control.
 
-Para chequear el estado del sensado se puede utilizar `/controlconditionstatus`. Para chequear el estado de encendido del control se utiliza el comando `/controlstatus`. Ambos seguidos del control elegido.
+To check the status of the sense you can use `/controlintervalstatus` and to check the power-on status of the control you can use `/controlstatus`. Finally, you can check the next time the sense will be triggered with `/nextcontroltime`. All followed by the chosen control.
 
 <p align=center>
-    <img src="docs/images/bot_control_condition.jpg" height="500" alt="Control por condiciones"/>
+    <img src="docs/images/bot_control_interval.jpg" height="500" alt="Control by time interval"/>
 </p>
 
-### Resumen de comandos
+### Control by conditions
 
-En la siguiente tabla se puede observar un resumen de los comandos existentes. Estos pueden ser consultados también en el menú del bot.
+The control by conditions allows to activate each control of the device (light and water) according to the conditions of the variables sensed by the device. Each specific command in this section should be followed by the letter `l` or `w` for light or water respectively, and then followed by the necessary variables with a space in between (see the command summary for more information).
+
+To configure the control conditions, the `/setcontrolcondition` command is used followed by the chosen control, and the conditions must be entered with their comparison sign and separated by a comma as `l < value, t > value`. The available signs are minor (`<`) and major (`>`) and the variables have letters representing the variables sensed (`t` for temperature, `l` for light, `m` for soil humidity (*moisture *) and `h` for ambient humidity). Conditions can be entered for only a few variables, there need not be one for each.
+
+This control can be activated and deactivated with `/activatecontrolcondition` and `/deactivatecontrolcondition` respectively followed by the chosen control.
+
+To check the status of the sensing you can use `/controlconditionstatus`. To check the power-on status of the control, use the `/controlstatus` command. Both followed by the chosen control.
+<p align=center>
+    <img src="docs/images/bot_control_condition.jpg" height="500" alt="Control by conditions"/>
+</p>
+
+### Command Summary
+
+The following table shows a summary of the existing commands. These can also be consulted in the bot menu.
+
 
 | Comando                     | Parámetros                           | Descripción                                                                                                                                                                                                                                         |
 |-----------------------------|--------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| /start                      | -                                    | Inicia el bot.                                                                                                                                                                                                                                      |
-| /setpwd                     | nueva contraseña, vieja contraseña   | Configura una nueva contraseña. La anterior va si tuviera una.                                                                                                                                                                                      |
-| /addme                      | contraseña                           | Agrega al usuario al registro de usuarios. Debe ponerse contraseña si tuviera una.                                                                                                                                                                  |
-| /removeme                   | -                                    | Elimina al usuario del registro de usuarios.                                                                                                                                                                                                        |
-| /temperature                | -                                    | Envía el valor de la temperatura.                                                                                                                                                                                                                   |
-| /humidity                   | -                                    | Envía el valor de la humedad ambiente.                                                                                                                                                                                                              |
-| /moisture                   | -                                    | Envía el valor de la humedad del suelo.                                                                                                                                                                                                             |
-| /light                      | -                                    | Envía el valor de la luz.                                                                                                                                                                                                                           |
-| /senseall                   | -                                    | Envía el valor de todos los parámetros sensados.                                                                                                                                                                                                    |
-| /calibratelightsensor       | -                                    | Comienza el calibrado del sensor de luz.                                                                                                                                                                                                            |
-| /calibratemoisturesensor    | -                                    | Comienza el calibrado del sensor de humedad del suelo.                                                                                                                                                                                              |
-| /activatesenseinterval      | -                                    | Activa el sensado por intervalos.                                                                                                                                                                                                                   |
-| /deactivatesenseinterval    | -                                    | Desactiva el sensado por intervalos                                                                                                                                                                                                                 |
-| /setsenseinterval           | intervalo                            | Configura el intervalo entre sensado. El intervalo se establece como un número seguido de su unidad (s, m, h d).                                                                                                                                    |
-| /senseintervalstatus        | -                                    | Envía el estado del sensado por intervalos.                                                                                                                                                                                                         |
-| /nextsensetime              | -                                    | Envía la hora del próximo sensado.                                                                                                                                                                                                                  |
-| /activatecontrol            | control                              | Activa manualmente el control. El parámetro puede ser w (agua) o l (luz).                                                                                                                                                                           |
-| /deactivatecontrol          | control                              | Desactiva manualmente el control. El parámetro puede ser w (agua) o l (luz).                                                                                                                                                                        |
-| /controlstatus              | control                              | Envía el estado del control. El parámetro puede ser w (agua) o l (luz).                                                                                                                                                                             |
-| /activatecontrolinterval    | control                              | Activa el control por intervalos. El parámetro puede ser w (agua) o l (luz).                                                                                                                                                                        |
-| /deactivatecontrolinterval  | control                              | Desactiva el control por intervalos. El parámetro puede ser w (agua) o l (luz).                                                                                                                                                                     |
-| /setcontrolinterval         | control, intervalo, duración         | Configura el intervalo y la duración del control. El control puede ser w (agua) o l (luz). El intervalo y la duración se establecen como un número seguido de su unidad (s, m, h d).                                                                |
-| /controlintervalstatus      | control                              | Envía el estado del control por intervalos. El parámetro puede ser w (agua) o l (luz).                                                                                                                                                              |
-| /nextcontroltime            | control                              | Envía la hora de la próxima activación de control. El parámetro puede ser w (agua) o l (luz).                                                                                                                                                       |
-| /activatecontrolcondition   | control                              | Activa el control por condiciones. El parámetro puede ser w (agua) o l (luz).                                                                                                                                                                       |
-| /deactivatecontrolcondition | control                              | Desactiva el control por condiciones. El parámetro puede ser w (agua) o l (luz).                                                                                                                                                                    |
-| /setcontrolcondition        | control, condicion 1, condicion 2, … | Configura las condiciones para el encendido. El parámetro control puede ser w (agua) o l (luz). Las condiciones deben ser dadas con la variable a comparar (l, m, t o h) seguido de un signo (< o >) y luego el valor con el que se desea comparar. |
-| /controlconditionstatus     | control                              | Envía el estado del control por condiciones. El parámetro puede ser w (agua) o l (luz).                                                                                                                                                             |
+| /start                      | -                                    | Starts the bot.                                                                                                                                                                                                                                      |
+| /setpwd                     | New password, old password   | Sets new password. If a password was set it must be entered.                                                                                                                                                                                      |
+| /addme                      | password                           | Adds the user to the users registry. If a password is set must be entered.                                                                                                                                                                  |
+| /removeme                   | -                                    | Deletes the user of the users registry.                                                                                                                                                                                                    |
+| /temperature                | -                                    | Sends temperature value.                                                                                                                                                                                                                   |
+| /humidity                   | -                                    | Sends ambient humidity value.                                                                                                                                                                                                              |
+| /moisture                   | -                                    | Sends moisture value.                                                                                                                                                                                                             |
+| /light                      | -                                    | Sends light value.                                                                                                                                                                                                                           |
+| /senseall                   | -                                    | Sends all sensed variables value.                                                                                                                                                                                                    |
+| /calibratelightsensor       | -                                    | Starts light sensor calibration.                                                                                                                                                                                                          |
+| /calibratemoisturesensor    | -                                    | Starts moisture sensor calibration.                                                                                                                                                                                            |
+| /activatesenseinterval      | -                                    | Activates sensing by interval.                                                                                                                                                                                                                  |
+| /deactivatesenseinterval    | -                                    | Deactivates sensing by interval.                                                                                                                                                                                                                 |
+| /setsenseinterval           | interval                            | Set sensing by interval. The interval is set as a number followed by its unit (s, m, h d).                                                                                                                                    |
+| /senseintervalstatus        | -                                    | Sends the sensing by interval state.                                                                                                                                                                                                         |
+| /nextsensetime              | -                                    | Sends the time of the next sense.                                                                                                                                                                                                                 |
+| /activatecontrol            | control                              | Activates the control manually. The parameter could be w (water) or l (light).                                                                                                                                                                          |
+| /deactivatecontrol          | control                              |  Deactivates the control manually. The parameter could be w (water) or l (light).                                                                                                                                                                        |
+| /controlstatus              | control                              |  Sends control state. The parameter could be w (water) or l (light).                                                                                                                                                                             |
+| /activatecontrolinterval    | control                              |  Activates control by interval. The parameter could be w (water) or l (light).                                                                                                                                                                        |
+| /deactivatecontrolinterval  | control                              | Deactivates control by interval. The parameter could be w (water) or l (light).                                                                                                                                                                     |
+| /setcontrolinterval         | control, interval, duration         | Set control interval and duration. The interval and duration are set as a number followed by its unit (s, m, h d).                                                                |
+| /controlintervalstatus      | control                              | Sends control by interval state. The parameter could be w (water) or l (light).                                                                                                                                                              |
+| /nextcontroltime            | control                              | Sends next time of activation. The parameter could be w (water) or l (light).                                                                                                                                                       |
+| /activatecontrolcondition   | control                              | Activates control by conditions. The parameter could be w (water) or l (light).                                                                                                                                                                       |
+| /deactivatecontrolcondition | control                              | Deactivates control by conditions. The parameter could be w (water) or l (light).                                                                                                                                                                    |
+| /setcontrolcondition        | control, condition 1, condition 2, … | Set control turn on conditions. The control parameter could be w (water) or l (light). The conditions should be given with the variable to compare (l, m, t or h) followed by a sign (< or >) and then the value which is desired to compare. |
+| /controlconditionstatus     | control                              | Sends the control by conditions state. The parameter could be w (water) or l (light).                                                                                                                                                             |
 
 <p align=center>
-    <img src="docs/images/bot_menu.jpg" height="500" alt="Menu de comandos del bot"/>
+    <img src="docs/images/bot_menu.jpg" height="500" alt="Bot commands menu"/>
 </p>
 
 
