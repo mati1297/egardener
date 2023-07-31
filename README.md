@@ -25,7 +25,7 @@ It is possible to sense the parameters both manually and on a regular basis. And
 A block diagram of the project is shown in Figure. Three large groups of peripherals are observed: communication, sensing, time control and actuator simulation. The first consists of an ESP32 microcontroller used as a Wi-Fi Module through a serial port. The second consists of three sensors: a room humidity and temperature sensor (which is controlled via I2C), a light sensor, and a ground humidity sensor, the third consists of an RTC module to be able to carry out precise control of the time for the functions by time, the last one consists of two leds that will simulate the activation of the actuators.
 
 <p align=center>
-    <img src="docs/images/block_diagram.png" alt="Project block diagram" height="350"/>
+    <img src="docs/images/block_diagram_.png" alt="Project block diagram" height="350"/>
 </p>
 
 ## Repository structure
