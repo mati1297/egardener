@@ -61,7 +61,7 @@ Where there are the folders or files:
 
 The steps to using the device through the Telegram bot are detailed here. In [Command Summary](#command-summary) the complete summary of the commands can be consulted with their specific use (variables, etc).
 
-### PC Connection
+### Connection to PC
 
 To get started, both the NUCLEO board must be connected via USB to a computer or power supply as well as the ESP32 board. Once the NUCLEO board is connected, it will initialize and report it through the USB serial port. Information like the one in Figure will be seen and the password to register in the bot will be informed. In this case, the CoolTerm program is used.
 
@@ -81,7 +81,7 @@ Having the Telegram application downloaded on a mobile phone or a computer, a co
 
 Once the chat is started, the `/start` command must be sent (which is mandatory since Telegram does not enable the chat until it is sent, and allows sending it with a button). At this point, the bot will reply with a welcome message and ask the user to register.
 
-To register, you must send the command `/addme` followed by a space and the password, the password is given by USB serial port as shown in [Connection to PC](#pc-connection). Once the password is entered, you can start interacting.
+To register, you must send the command `/addme` followed by a space and the password, the password is given by USB serial port as shown in [Connection to PC](#connection-to-pc). Once the password is entered, you can start interacting.
 
 The password can be changed using the `/setpwd` command, followed by a space and the new password, and then another space and the old password if any.
 
