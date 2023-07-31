@@ -30,7 +30,7 @@ Es posible sensar los parámetros tanto manualmente como de manera regular. Y el
 Se muestra en la Figura un diagrama en bloques del proyecto. Se observan tres grandes grupos de periféricos: comunicación, sensado, control de tiempo y simulación de actuadores. La primera consiste en un microcontrolador ESP32 utilizado como Módulo Wi-Fi a través de puerto serie. La segunda consiste en tres sensores: un sensor de humedad y temperatura ambiente (que se controla a través de I2C), un sensor de luz, y un sensor de humedad de tierra, el tercero consiste en un módulo RTC para poder llevar un control preciso del tiempo para las funciones por tiempo, el último consiste en dos leds que simularán el encendido de los actuadores.
 
 <p align=center>
-    <img src="docs/images/block_diagram.png" alt="Diagrama en bloques del proyecto" height="350"/>
+    <img src="docs/images/diagrama_en_bloques.png" alt="Diagrama en bloques del proyecto" height="350"/>
 </p>
 
 ## Organización del repositorio
